@@ -1,0 +1,98 @@
+---
+title: 'DATA 624 Spring 2019: Homework-1'
+author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
+date: "March 12, 2019"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(mlbench)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+##### <span style="color:blue"><b><u>HA# 2.3</u></b></span>
+![](Question_01_HA2.3.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 2.7</u></b></span>
+![](Question_02_HA2.7.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 2.10</u></b></span>
+![](Question_03_HA2.10.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 3.1</u></b></span>
+![](Question_04_HA3.1.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 3.8</u></b></span>
+![](Question_05_HA3.8.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 6.2</u></b></span>
+![](Question_06_HA6.2.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 6.6</u></b></span>
+![](Question_07_HA6.6.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>KJ# 3.1</u></b></span>
+![](Question_08_KJ3.1.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>KJ# 3.2</u></b></span>
+![](Question_09_KJ3.2.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 7.5</u></b></span>
+![](Question_10_HA7.5.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 7.6</u></b></span>
+![](Question_11_HA7.6.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 7.10</u></b></span>
+![](Question_12_HA7.10.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 8.1</u></b></span>
+![](Question_13_HA8.1.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 8.2</u></b></span>
+![](Question_14_HA8.2.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 8.7</u></b></span>
+![](Question_15_HA8.7.PNG)
+```{r}
+```
+
+##### <span style="color:blue"><b><u>HA# 8.12</u></b></span>
+![](Question_16_HA8.12.PNG)
+```{r}
+```
+
+
