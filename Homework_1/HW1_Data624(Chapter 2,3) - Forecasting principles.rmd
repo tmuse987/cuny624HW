@@ -1,0 +1,264 @@
+---
+title: " DATA 624 Spring 2019:Homework-1"
+author: "Hapreet Shoker,Jagruti Solao,Ahmed Sajjad,Chad Smith,Todd Weigel"
+date: "2/4/2019"
+output: pdf_document
+---
+
+```{r,echo = TRUE}
+library(ggplot2)
+library(ggfortify)
+library(forecast)
+library(gridExtra)
+library(fpp2)
+```
+
+### 2.3) Download some monthly Australian retail data from the book website. These represent retail sales in various categories for different Australian states, and are stored in a MS-Excel file.
+
+
+#### a) You can read the data into R with the following script:
+
+```{r,echo = TRUE}
+retaildata <- readxl::read_excel("retail.xlsx", skip=1)
+```
+
+The second argument (skip=1) is required because the Excel sheet has two header rows.
+
+### b) Select one of the time series as follows (but replace the column name with your own chosen column):
+
+```{r,echo = TRUE}
+myts <- ts(retaildata[,"A3349873A"],frequency=12, start=c(1982,4))
+head(myts)
+```
+
+### c) Explore your chosen retail time series using the following functions:
+
+autoplot(), ggseasonplot(), ggsubseriesplot(), gglagplot(), ggAcf()
+
+Can you spot any seasonality, cyclicity and trend? What do you learn about the series?
+
+```{r,echo = TRUE}
+autoplot(myts) +
+  ggtitle("Monthly retail data: Australia") +
+  xlab("Year") +
+  ylab("Thousands")
+```
+                                   Fig:1
+                                   
+Time series plot reveals following features:
+
+1) There is continuous increment for business in retail sector data from 1982 to2012.
+
+2) Sudden dip was observed in year 2000 and  2010 may be due to resession and slowdown of market.
+
+3) Retail market shows dips for start of year and gradual highs towards end of it.
+
+```{r,echo = TRUE}
+ggseasonplot(myts, year.labels=TRUE, year.labels.left=TRUE) +
+  ylab("$ million") +
+  ggtitle("Seasonal plot: Retail data")
+```
+                                  Fig: 2
+                                  
+                                  
+A seasonal plot allos the underlaying pattern to be seen more clearly and are useful in identifying years in which the pattern changes.
+In our case, above plot makes it clear that there is large jump in retail sector by end of year , mostly in Nov and Dec.patterns also make us notice that there are 
+unsual dips in retail sector around Jun ,July.Seasonal plot is similar to time plot except the data are plotted against the individual "seasons" in which data were observed.There can also be variation made in plot using polar co-ordinates.
+
+```{r,echo = TRUE}
+ggseasonplot(myts, polar = TRUE) +
+  ylab("$ million") +
+  ggtitle("Seasonal plot: Retail data")
+```
+                             Fig: 3
+                             
+
+```{r,echo = TRUE}
+ggsubseriesplot(myts) +
+  ylab("$ million") +
+  ggtitle("Seasonal subseries plot: antidiabetic drug sales")
+```
+                                      Fig: 4
+                                      
+                                      
+Seasonality plot validates our clain that retail sector has maximum business in November and December each year.
+The horizontal line indicates means for each month.This form of plot enables the underlaying seasonal pattern to be seen clearly,also showing changes in seasonality over time.
+
+```{r,echo = TRUE}
+gglagplot(myts)
+```
+                                Fig: 5
+                                
+Figure shows Lagged scatterplots for monthly retail data.
+The relations are strongly positive for month 5,6,7 i.e May,June,July for lag 1,2,3,4 and strongly negative for month 5 in lag 5,6,7.
+
+```{r,echo = TRUE}
+
+ggAcf(window(myts),start = 1982)
+```
+                                 Fig: 6
+                                 
+Figure 6 shows Autocorrelation function for monthly retail data for Australia.
+As we can observe there is no negative co-relation observed. The dashed blue lines indicate whether the correlations are significantly different from zero.
+
+
+### 2.7) The arrivals data set comprises quarterly international arrivals (in thousands) to Australia from Japan, New Zealand, UK and the US.
+### Use autoplot(), ggseasonplot() and ggsubseriesplot() to compare the differences between the arrivals from these four countries. Can you identify any unusual observations?
+
+
+```{r}
+library(fpp2)      # fpp2 provided inbuit datasets for time series analysis in R.
+```
+
+
+```{r,echo = TRUE}
+myts1 <- ts(arrivals[,"Japan"])
+a <- autoplot(myts1) + ggtitle("Arrivals to Australia from Japan") + ylab("Thousands")
+myts2 <- ts(arrivals[,"NZ"])
+b <- autoplot(myts2) + ggtitle("Arrivals to Australia from NZ") + ylab("Thousands")
+myts3 <- ts(arrivals[,"UK"])
+c <- autoplot(myts3) + ggtitle("Arrivals to Australia from UK") + ylab("Thousands")
+myts4 <- ts(arrivals[,"US"])
+d <- autoplot(myts4) + ggtitle("Arrivals to Australia from US") + ylab("Thousands")
+grid.arrange(a,b,c,d, nrow = 2)
+```
+                                 Fig: 7
+                                 
+```{r,echo = TRUE}
+a1 <- ggseasonplot(arrivals[,"Japan"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for Japan")
+b1 <- ggseasonplot(arrivals[,"NZ"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for NZ")
+c1 <- ggseasonplot(arrivals[,"UK"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for UK")
+d1 <- ggseasonplot(arrivals[,"US"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for US")
+grid.arrange(a1,b1,c1,d1, nrow = 2)
+```
+Fig : 8
+                               
+The most unusual observation is obsereved for arrival data in 'UK' for Q2 and Q3.The arrival numbers are drastically down but gradually increased in Q4.At the same time,
+New zealand shows highest arrival rates for Q3.
+
+```{r,echo = TRUE}
+a2 <- ggsubseriesplot(arrivals[,"Japan"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for Japan")
+b2 <- ggsubseriesplot(arrivals[,"NZ"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for NZ")
+c2 <- ggsubseriesplot(arrivals[,"UK"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for UK")
+d2 <- ggsubseriesplot(arrivals[,"US"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for US")
+grid.arrange(a2,b2,c2,d2, nrow = 2) 
+```
+                                    Fig: 9
+                                    
+
+Seasonal subseries plot emphasises theseasonal patterns of data.The horizontal lines indicate means for each quarter.This form of plot enables the underlaying seasonal pattern to be seen clearly ,and also shows the changes in seasonality over time.If we observe seasonal plots for all four countries,New zealand has the highest rate of arrival data for all four quarters.UK seems to have lowest arrival rates for Q2 and Q3.
+
+
+
+### 2.10) dj contains 292 consecutive trading days of the Dow Jones Index. Use ddj <- diff(dj) to compute the daily changes in the index. Plot ddj and its ACF. Do the changes in the Dow Jones Index look like white noise?
+
+```{r}
+ddj <- diff(dj)
+autoplot(ddj)
+ggAcf(ddj)
+```
+
+                                     fIG: 10
+                                     
+For white noise series, each autocorelation is expected to be close to zero.If one or more large spikes are outside these bounds of blue dotted lines, or if more than 5% of spikes are outside this bounds,then series is not a white noise. In our case,all the autocorelations lie within these limits,confirming that the data is white noise.
+
+
+
+### 3.1)For the following series, find an appropriate Box-Cox transformation in order to stabilise the variance.
+usnetelec
+usgdp
+mcopper
+enplanements
+
+```{r}
+library(expsmooth)
+lambda <- BoxCox.lambda(usnetelec)
+lambda
+t1 <- plot(usnetelec)
+t2 <- autoplot(BoxCox(usnetelec,lambda))
+t1
+t2
+```
+                            Fig:11
+                            
+```{r}
+lambda1 <- BoxCox.lambda(usgdp)
+lambda1
+plot(usgdp)
+autoplot(BoxCox(usgdp,lambda1))
+```
+                             Fig:12
+                             
+```{r}
+lambda2 <- BoxCox.lambda(mcopper)
+lambda2
+plot(mcopper)
+autoplot(BoxCox(mcopper,lambda2))
+```
+                              Fig : 13
+                              
+```{r}
+lambda3 <- BoxCox.lambda(enplanements)
+lambda3
+plot(enplanements)
+autoplot(BoxCox(enplanements,lambda3))
+```
+                              Fig:14
+
+
+
+
+
+
+
+
+### 3.8)For your retail time series (from Exercise 3 in Section 2.10):
+
+#### Split the data into two parts using
+
+```{r}
+retail_data <- readxl::read_excel("retail.xlsx", skip=1)
+myts0       <- ts(retail_data[,"A3349873A"],frequency = 12,start = c(1982,4))
+myts0.train <- window(myts0, end=c(2010,12))
+myts0.test  <- window(myts0, start=2011)
+```
+
+
+#### Check that your data have been split appropriately by producing the following plot.
+
+```{r}
+autoplot(myts0.train)
+autoplot(myts0.test)
+```
+                                  Fig:15
+                                  
+#### Calculate forecasts using snaive applied to myts.train.
+
+```{r}
+fc <- snaive(myts.train)
+fc
+```
+
+#### Compare the accuracy of your forecasts against the actual values stored in myts.test.
+
+```{r}
+accuracy(fc,myts.test)
+```
+
+#### Check the residuals.
+
+```{r}
+checkresiduals(fc)
+```
+
+#### Do the residuals appear to be uncorrelated and normally distributed?
+
+Residuals are auto - correlated and normally distributed but not centered at zero.
+
+
+#### How sensitive are the accuracy measures to the training/test split?
+
+In above case,it does not appear that accuracy measures are much sesitive, as we observeLag plot ,some correlations are still reflected on residuals.
+
+
+
