@@ -148,6 +148,7 @@ ddj <- diff(dj)
 autoplot(ddj)
 ggAcf(ddj)
 ```
+For white noise series, each autocorelation is expected to be close to zero.If one or more large spikes are outside these bounds of blue dotted lines, or if more than 5% of spikes are outside this bounds,then series is not a white noise. In our case,all the autocorelations lie within these limits,confirming that the data is white noise.
 
 ##### <span style="color:blue"><b><u>HA# 3.1</u></b></span>
 <div id="Question_04_HA3.1.PNG"><img src="Question_04_HA3.1.PNG" alt="Question_04_HA3.1.PNG"></div>
@@ -424,23 +425,283 @@ From the above forescast plot we can see that the forecasts from stlf function a
 
 ##### <span style="color:blue"><b><u>HA# 7.5</u></b></span>
 <div id="Question_10_HA7.5.PNG"><img src="Question_10_HA7.5.PNG" alt="Question_10_HA7.5.PNG"></div>
+##### a) Plot the series and discuss the main features of the data. 
+
 ```{r}
+bookdata <- window(books)
+autoplot(bookdata) +
+  xlab("Day") + ylab("Books Sold")
 ```
+
+The plot shows that the data has an upwards trend over the 30 days. The trend does seem to be linear. There is a correlation between the paperback and hardcover sales. Whenever a spike occurs in the paperback sales, a dip in the hardcover sales occurs. The spikes is sales may also show a seasonal trend that is dependent on the day of the week.
+
+##### b) Use the ses() function to forecast each series, and plot the forecasts.
+
+Plot for Paperback using SES function
+```{r}
+#Simple smoothing for Paperbacks
+fc.p <- ses(bookdata[,1])
+
+autoplot(fc.p) +
+  autolayer(fitted(fc.p), series="Fitted") +
+  ylab("Paperback Sales") + xlab("Day") +
+  ggtitle("Paperback SES")
+```
+
+Forecast data for Paperbacks
+
+```{r}
+fc.p
+```
+
+Plot for Hardcover using SES function
+```{r}
+#Simple smoothing for Hardcovers
+fc.h <- ses(bookdata[,2])
+
+autoplot(fc.h) +
+  autolayer(fitted(fc.h), series="Fitted") +
+  ylab("Hardcover Sales") + xlab("Day") +
+  ggtitle("Harccover SES")
+```
+
+Forecast data for Hardcovers
+
+```{r}
+fc.h
+```
+
+##### c) Compute the RMSE values for the training data in each case.
+
+The SES model provides us with the Mean Squared Error already, by calculating the square root of that number we can find the RMSE.
+
+```{r}
+x <- sqrt(fc.p$model$mse)
+y <- sqrt(fc.h$model$mse)
+
+print(paste0("RMSE for Paperbacks is ",x))
+print(paste0("RMSE for Hardcovers is ",y))
+```
+
 
 ##### <span style="color:blue"><b><u>HA# 7.6</u></b></span>
 <div id="Question_11_HA7.6.PNG"><img src="Question_11_HA7.6.PNG" alt="Question_11_HA7.6.PNG"></div>
+##### a) Apply Holt's linear method to the paperback and hardback series and compute four-day forecasts in each case.
+
+Holt's linear method for paperback and the four-day forecasts
 ```{r}
+#Holt's linear method for Paperback
+
+holt.p <- holt(bookdata[,1], h=4)
+holt.p
 ```
+
+Holt's linear method for hardcover and the four-day forecasts
+```{r}
+#Holt's linear method for Hardcover
+
+holt.h <- holt(bookdata[,2], h=4)
+holt.h
+```
+
+##### b) Compare the RMSE measures of Holt's method for the two series to those of simple exponential smoothing in the previous question.  (Remember that Holt's method is using one more parameter that SES). Discuss the merits of the two forecasting methods for these data sets.
+
+```{r}
+hx <- sqrt(holt.p$model$mse)
+hy <- sqrt(holt.h$model$mse)
+
+print(paste0("SES RSME for Paperback is ", round(x,2)))
+print(paste0("Holt RSME for Paperback is ", round(hx,2)))
+cat('\n')
+print(paste0("SES RSME for Hardcover is ", round(y,2)))
+print(paste0("Holt RSME for Hardcover is ", round(hy,2)))
+```
+
+The RMSE values for Holt's linear method are smaller which indicates this method has more accurate predicted values than the simple exponential smoothing method.  Both methods use a smoothing level equation which is a weighted average observation between the mose recent observation and the previous one but Holt's method also uses a trend smoothing equation. This equation calculates the weighted average of the estimated trend at a time based on the current level estimate and previous trend estimate. This method is more accurate especially if the data shows a trend but is also more complicate because of the added variable.
+
+##### c) Compare the forecasts for the two series using both methods.  Which do you think is best?
+
+Paperback forecasts
+
+```{r}
+autoplot(bookdata[,1]) +
+  autolayer(fc.p, series="SES", PI=FALSE) +
+  autolayer(holt.p, series="Holt", PI=FALSE) +
+  ggtitle("Forecasts for Paperback Sales") +
+  ylab("Paperback Sales") + xlab("Day") + 
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+Hardcover forecasts
+
+```{r}
+autoplot(bookdata[,2]) +
+  autolayer(fc.h, series="SES", PI=FALSE) +
+  autolayer(holt.h, series="Holt", PI=FALSE) +
+  ggtitle("Forecasts for Hardcover Sales") +
+  ylab("Hardcover Sales") + xlab("Day") + 
+  guides(colour=guide_legend(title="Forecast"))
+```
+
+We can see from the plotted forecasts that Holt's linear method takes into account the slope of the trend. The simple exponential smoothing only uses the last two steps as it's weighted measures for predictions so Holt's method is clearly better in this case.
+
+##### d) Calculate a 95% prediction interval for the first forecast for each series using the RMSE values and assuming normal errors.  Compare your intervals with those produced using ses and holt.
+
+
+```{r}
+#SES prediction intervals
+pred.pap.ses.low <- bookdata[30,1] - (1.96*x)
+pred.pap.ses.high <- bookdata[30,1] + (1.96*x)
+
+pred.hard.ses.low <- bookdata[30,2] - (1.96*y)
+pred.hard.ses.high <- bookdata[30,2] + (1.96*y)
+
+pred.pap.holt.low <- bookdata[30,1] - (1.96*hx)
+pred.pap.holt.high <- bookdata[30,1] + (1.96*hx)
+
+pred.hard.holt.low <- bookdata[30,2] - (1.96*hy)
+pred.hard.holt.high <- bookdata[30,2] + (1.96*hy)
+
+print(paste0("SES Paperback 95% Prediction Interval is [",round(pred.pap.ses.low,2),",",round(pred.pap.ses.high,2),"]"))
+print(paste0("SES Hardcover 95% Prediction Interval is [",round(pred.hard.ses.low,2),",",round(pred.hard.ses.high,2),"]"))
+cat()
+print(paste0("Holt Paperback 95% Prediction Interval is [",round(pred.pap.holt.low,2),",",round(pred.pap.holt.high,2),"]"))
+print(paste0("Holt Hardcover 95% Prediction Interval is [",round(pred.hard.holt.low,2),",",round(pred.hard.holt.high,2),"]"))
+```
+
+The prediction intervals from the two methods show that Holt's methods have a narrower prediction interval meaning the next forecasted value is more 'zoned in' that the SES method. The smaller variance means the calculated error from the actual value is smaller. 
 
 ##### <span style="color:blue"><b><u>HA# 7.10</u></b></span>
 <div id="Question_12_HA7.10.PNG"><img src="Question_12_HA7.10.PNG" alt="Question_12_HA7.10.PNG"></div>
+##### a) Plot the data and describe the main features of the series.
+
 ```{r}
+uk <- window(ukcars)
+
+autoplot(uk) +
+  ylab("Cars Produced") + xlab("Year")
 ```
+
+The plot shows that the data has seasonality fluctuations depending on the time of the year. It also shows that the data may have a slight cyclical effect as the trend decreases pre-1980 and after 2000. 
+
+##### b) Decompose the series using STL and obtain the seasonally adjusted data.
+
+```{r}
+stl.data <- stl(uk, t.window=13, s.window='periodic', robust = TRUE)
+
+autoplot(stl.data) +
+  ggtitle("STL Decomposition")
+```
+STL Seasonal Data Plot
+
+```{r}
+stl.season <- seasadj(stl.data)
+
+autoplot(stl.season) +
+  ggtitle("Seasonally Adjusted Data Plot") +
+  ylab("UK Car Production") + xlab("Year")
+```
+
+Sample of the adjusted seasonal data
+
+```{r}
+head(stl.season, 20)
+```
+
+##### c) Forecast the next two years of the series using an additive damped trend method applied to the seasonally adjusted data. (This can be done in one step using stlf() with arguments etsmodel="AAN", damped=TRUE .)
+
+```{r}
+fcast <- stlf(uk, t.window = 13, s.window= 'periodic', etsmodel='AAN', damped=TRUE)
+
+autoplot(fcast) +
+  ggtitle("STLF Forecast ~ 2years") +
+  xlab("Year") + ylab("UK Car Production")
+```
+
+Forecasted mean for next two years.
+```{r}
+fcast$mean
+```
+
+##### d) Forecast the next two years of the series using Holt's linear method applied to the seasonally adjusted data (as before but with damped=FALSE)
+
+```{r}
+#h=8 for the next 8 quarters (or 2 years)
+holt.fc <- holt(stl.season, h=8, damped=FALSE)
+
+autoplot(holt.fc) +
+  xlab("Year") + ylab("UK Car Production")
+```
+
+Holt's forecasted mean for next two years.
+```{r}
+holt.fc$mean
+```
+
+##### e) Now use ets() to choose a seasonal model for the data.
+
+```{r}
+model <- ets(stl.season)
+
+summary(model)
+```
+
+The ETS function has chosen model ETS(A,N,N) as the model of best fit.
+
+##### f) Compare the RMSE of the ETS model with the RMSE of the models you obtained using STL decompisitions.  Which gives the better in-sample fits?
+
+```{r}
+fcast.rmse <- sqrt(fcast$model$mse)
+
+holt.rmse <- sqrt(holt.fc$model$mse)
+
+ets.rmse <- sqrt(model$mse)
+
+print(paste0("RMSE for the STLF method is: ", fcast.rmse))
+cat('')
+print(paste0("RMSE for the HOLT LINEAR method is: ", holt.rmse))
+cat()
+print(paste0("RMSE for the ETS method is: ", ets.rmse))
+cat()
+```
+
+Though they are all very close, the STLF method does have a better fit when comparing RMSE's.
+
+##### g) Compare the forecasts from the three approaches.  Which seems most reasonable?
+
+```{r}
+ets.fc <- model %>% 
+  forecast(h=8)
+
+autoplot(stl.season) +
+  autolayer(fcast, series="STL", PI=FALSE) +
+  autolayer(holt.fc, series="HOLT", PI=FALSE) +
+  autolayer(ets.fc, series="ETS", PI=FALSE) +
+  ggtitle("Forecasts of STL, HOLT, and ETS methods") +
+  xlab("Year") + ylab("UK Car Production")
+```
+
+The STL model resembles a more realistic forecast compared to the other two. However, the holt model does include the increasing trend from 1980 forward. The data may also show a cyclical pattern where after 2000 the trend starts to decline which may give ETS an advantage.
+
+##### h) Check the residuals of your preferred model.
+
+```{r}
+checkresiduals(fcast$residuals)
+```
+
+The lag plot shows that 5 autocorrelations are beyond the critical value boundaries. There is also a seaonal trend that is apparent so the ACF plot is not stationary.
 
 ##### <span style="color:blue"><b><u>HA# 8.1</u></b></span>
 <div id="Question_13_HA8.1.PNG"><img src="Question_13_HA8.1.PNG" alt="Question_13_HA8.1.PNG"></div>
-```{r}
-```
+##### a) Explain the differences among these figures.  Do they all indicate that the data is white noise?
+
+For these plots I would expect no more than 5% of the lags to exceed the 95% interval boundaries. Since only 20 lags are shown in the plots we have to make assumptions. If the plot is stationary then the properties do not depend on the time at which the series is observed. For the first plot, 1 out of 20 lags is beyond the boundary which is 5%. This could still be white noise but more tests should be done. The second plot has 3 out of 20 which is beyond 5% meaning this is not white noise. The third plot doesn't show any white does represent white noise. As for all the plots, there does not seem to be any apparent pattern or structure to the plots.
+
+##### b) Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise?
+
+The critical values are at different distances becuase of the equation $$\frac{2\pm }{ \sqrt{T}}$$ where $$T$$ is the number of values used. Since plot 1 has 36 random numbers the critical values are $$\frac{2\pm }{ \sqrt{36}}$$ or $$\pm 0.33$$.
+
+The autocorrelations should be as close to zero as possible if it is white noise. As more lags become available, the confidence that the next lag will be near zero will be high. This is why the critical values shrink closer to zero with more numbers. 
 
 ##### <span style="color:blue"><b><u>HA# 8.2</u></b></span>
 <div id="Question_14_HA8.2.PNG"><img src="Question_14_HA8.2.PNG" alt="Question_14_HA8.2.PNG"></div>
