@@ -453,17 +453,256 @@ From the above forescast plot we can see that the forecasts from stlf function a
 
 ##### <span style="color:blue"><b><u>HA# 8.2</u></b></span>
 ![](Question_14_HA8.2.PNG)
+
+
+#HW8.11.2
+This problem is to plot the IBM closing stock price of IBM over a period of time, and examine it's lack of "stationariness".
+
+First lets just plot the raw data.  From the plot, it is obvious (as expected) that the data is not stationary.  There is an upward trend in the first third, then an accelerating downward trend in the second third, while the last third doesn't exhibit a clear trend.  The variability seems more pronounced in the first half of the graph, but that is perhaps only subjective.  There doesn't seem to be obvious seasonality, or cyclicity.
+
 ```{r}
+library(fpp2)
+autoplot(ibmclose)
 ```
+
+##ACF PACF Plots
+Below we print the plots of the ACF (auto correlation function) and the PACF (partial ACF) to further examine the non-stationariness as well as to how we might need to difference the series to make it stationary.
+
+Looking at the ACF plot we see it is decaying slowly, a clear indication of non-stationary data.  Also the value of R is quite large, further indicating the series isn't stationary.
+
+With the PACF model, we see 1 really large spike, this indicates differencing of 1 is probably all that is needed to make the data stationary.
+
+```{r}
+ggAcf(ibmclose)
+ggPacf(ibmclose)
+```
+###Rerun After taking one difference.
+
+Running the plots after we use the "diff" (difference) command, we see that data now doesn't show upward/downward trend, but the variance looks like it might be slightly larger, towards the end of the sequence.  In any case the ACF and PACF plots while still containing some spikes above the upper signifcance line, are only very slighly above, so the series is much closer to being a stationary series.
+
+```{r}
+ibmDiffed <- diff(ibmclose)
+autoplot(ibmDiffed)
+ggAcf(ibmDiffed)
+ggPacf(ibmDiffed)
+```
+
 
 ##### <span style="color:blue"><b><u>HA# 8.7</u></b></span>
 ![](Question_15_HA8.7.PNG)
+
+
+This problem deals with the dataset wmurders, which is a series containing the number of women murdered each year in the United States.
+First lets run some plots to examine the data.  
+
+From the raw plot of the data, we can definitely see obvious trend, with the murder rate climbing significantly through the 50's and 60's and then again with a strong decline from the early 90's to the early 2000's (until the end of the data).  Seasonal differences would not apply as the data is yearly and it is unlikely there is seasonal cycles of multiple years.
+
+
 ```{r}
+autoplot(wmurders)
+
 ```
+
+Unit Tests:
+Rather than just relying on subject "eyeballing" of the plotted data, let's run some unit tests for more objectivity.  We will run the KPSS (Kwiatkowski-Phillips-Schmidt-Shin) and the Augemented Dickey Fuller Tests.  The results are below for both the intial raw data and the data differenced once.
+
+
+```{r}
+library(urca)
+library(tseries)
+summary(ur.kpss(wmurders))
+summary(ur.kpss(diff(wmurders)))
+adf.test(wmurders)
+adf.test(diff(wmurders))
+```
+
+Interestingly, if we look at the KPSS test there doesn't seem to be a huge need to difference at all, the test statistics is under 1; differencing once does make that number even smaller though.  If we look at the ADF test though, the first result of 0.98 shows a strong need to difference, the result after differencing is much smaller at .0273, which indicates likely minimal trend, but we might wish to consider differencing twice to reduce further.
+
+Anyhow, lets plot the differenced data (below).  From the plot of the differenced data, we see that the trend has been removed, although there definitely still seems to be some increase in variation as time goes along, with small variation in the early stages and larger ones as we move forward in time.  Plotting the 2nd order difference removes much of that variation, so perhaps 2 will be good for the "d" of the ARIMA model.
+
+
+```{r}
+diffWmurders <- diff(wmurders)
+autoplot(diffWmurders)
+secondOrderDiffWmurders <- diff(diff(wmurders))
+autoplot(secondOrderDiffWmurders)
+```
+
+Now looking at the ACF and the PACF plots (below), we see one time containing a spike into the "significance" range.  This was at time period 2 for both graphs.  This suggests maybe having a "p" value of at least 1 for the ARIMA model.
+
+
+```{r}
+ggAcf(diffWmurders)
+ggPacf(diffWmurders)
+
+```
+
+
+
+If we want to consider differencing a second time, let's look at the two ACF plots.  We see that the first lag in both plots is greater than negative 0.5, which may mean the plot is overdifferenced.  But leaving that aside for now, we see with both plots that they are sinusoidal, indicating that both a p and q parameter would make sense.  For the PACF, the first lag is significant so we should adding a parameter for the "q" or Moving Average (MA) part of the model.  In the ACF the first two lags are significant, indicating when we difference twice we should add 2 to the "p" or Autoregressive ARIMA parameter, but since the second is so much smaller and guidance from <a>https://people.duke.edu/~rnau/arimrule.htm<a> suggests that if we have both MA and AR terms, we may want to reduce one or both of those by 1, since they may cancel each other out.
+
+```{r}
+secondOrderDiffWmurders <- diff(diff(wmurders))
+autoplot(secondOrderDiffWmurders)
+ggAcf(secondOrderDiffWmurders)
+ggPacf(secondOrderDiffWmurders)
+```
+
+So, we are left with a few choices for models, if we go with 1 order of differencing as we saw potential of over differencing with 2 orders, our model is (1,1,1).  If we choose 2 orders of differencing, we are left with either (1,2,2) as the likely choice, with the (1,2,1) also possible, if we lower the higher order MA term based on the comment from the Duke website.  Let's look at the 3 results:
+
+```{r}
+Arima(wmurders, c(1,1,1))
+Arima(wmurders, c(1,2,2))
+Arima(wmurders, c(1,2,1))
+```
+Looking at these results, the model with the lowest AIC values is actually (1,1,1).  So, the fact that has the lowest AIC, the fewest params (simpler) and the lowest variation and the least differencing, then this perhaps is the best model.  But (not shown), in checking the residuals for the (1,1,1) they were not as satisfactory.  So that leaves the other models, of the two, the (1,2,2) has very marginally better results for AIC and the BIC is noticably worse, and since the it is slighly more complex, I will suggest the best model is ARIMA(1,2,1),
+
+
+##8.11.7.B
+Should a constant be part of the model?  Normally if the model is differenced (which in our case is yes) and especially differenced more than once, then a constant is not included, so we shall not include a constant in our model.
+
+##8.11.7.C
+Using backshift notation, describe the differencing for our model.  Since we are differencing twice, we need to compute $(1-B)^2y_{t}$.  The full equation is:
+
+$y_{t}^{''} = y_{t} - 2y_{t-1} + y_{t-2} =(1 - 2B + B^2)y_{t} = (1-B)^2y_{t}$
+
+##8.11.7.D
+Fitting our ARIMA model in R and examing the residuals, see the plots below:
+
+```{r}
+fitted <- Arima(wmurders, c(1,2,1))
+scatter.smooth(fitted$residuals)
+checkresiduals(fitted)
+Box.test(fitted$residuals, type="Ljung-Box")
+```
+
+The residuals look reasonable.  They are evenly balanced around the mean.  There are some outliers at 1977 and 2001, this is where the actual data had a sharp change in direction, i.e., there were a greatly fewer murders in 1977 and greatly more in 2001 than in the prior year.  Not too suprisingly the model isn't handling those well.  The residuals do have a downward slope, so the model isn't perfect.  Also the ACF plot shows that the residuals are in tolerance, so basically these residuals are acceptable.
+
+##8.11.7.E and 8.11.7.F
+Forecasting using our model.
+
+```{r}
+forecast(fitted, h=3)
+autoplot(forecast(fitted, h=3))
+
+```
+
+##8.7.G
+Comparing our model to what auto.ARIMA has generated.
+
+Below we see that the auto.ARIMA function also chose a (1,2,1) model.  Of course as noted way above, the (1,2,2) model could also be considered as an acceptable choice, and if one plots this (not done here for brevity, we see similar results to the above forecast plots).
+
+
+```{r}
+auto.arima(wmurders)
+```
+
 
 ##### <span style="color:blue"><b><u>HA# 8.12</u></b></span>
 ![](Question_16_HA8.12.PNG)
+
+This problem works on the mcopper dataset.  First lets look at the data.
 ```{r}
+autoplot(mcopper)
 ```
 
+This looks like it needs a transformation, as the data shows variation over time.  So let's find an appropriate lambda value (0.191) for the transformation and plot that.  We see doing this, that the variation is much less now from the early (left) portion of the time series to later entries.
+
+
+```{r}
+lambda <- BoxCox.lambda((mcopper))
+lambda
+mCopperBCTransform <- BoxCox(mcopper, lambda)
+autoplot(mCopperBCTransform)
+```
+
+##8.12.B
+
+Now, let's find an ARIMA function that will allow us to forecast.  Using the R auto.Arima function we see that it predicts that an (0,1,1) model is appropriate.
+
+```{r}
+auto.arima(mcopper, lambda = lambda)
+```
+
+##8.12.C
+Let's experiment and see if other models might work better.  First let's adjust to the auto.Arima's parameters to allow a deeper search of models.
+
+```{r}
+auto.arima(mcopper, lambda = lambda, stepwise = FALSE, approximation = FALSE)
+```
+
+We see that the model returned was the same (0,1,1).  So the autofunction even with deeper analysis, still feels (0,1,1) is appropriate.
+
+We can do our own analysis (like in 8.11.7 above).  Doing the unit tests, we see that both the KPSS and Augmented Dickey fuller show lots of trend without differencing as KPSS test statistic was well over 1 and the ADF results was  substantially above 0.05 p-value, indicating trend.  Applying an order of differencing of 1, removed any signficant trend from the models as shown by these two tests.  So the having a "d" of one as indicated by auto.Arima seems correct.
+
+```{r}
+summary(ur.kpss(mCopperBCTransform))
+summary(ur.kpss(diff(mCopperBCTransform)))
+adf.test(mCopperBCTransform)
+adf.test(diff(mCopperBCTransform))
+```
+Lets run ACF and PACF tests to see if the "p" and "q" values chosen by the auto.Arima seem accurate as well.  Note due to substantial trend, we will only do the ACF tests on the data we already differenced.
+
+```{r}
+acf(diff(mCopperBCTransform))
+Pacf(diff(mCopperBCTransform))
+```
+
+We see on both the ACF and PACF two lags substantially above the significance threshold, which indicates trying a (2,1,2) model.  Note there are a few other lags on each chart that are borderline significant, but making a model (5,1,5) is probably not wise, as it is likely we are overfitting at that point.  So let's try an ARIMA model of (2,1,2) and look at the results:
+
+```{r}
+Arima(mcopper, c(2,1,2), lambda = lambda)
+```
+
+So the AIC is worse with this model.  The log likelihood is pretty close, but once you add in the fact that we have 5 parameters vs 2 for the one the auto.arima found, then we see that AIC is noticeably lower for our choice.  (Note AIC is a function of log likelihood and the paramters).
+
+Therefore we will chose the (0,1,1) as the best model.
+
+##8.11.12.D
+Using the (0,1,1) model let's examine the residuals.  The plots are below.  We see that the residuals look like white noise.  They are even around the 0 line with few outliers.  The ACF plot shows no residuals in the "significant" category and the Ljung-Box test shows a very high p value, again indicating residuals are essentially "white noise".
+
+```{r}
+fitted <- Arima(mcopper, c(0,1,1), lambda = lambda)
+#fitted$residuals
+checkresiduals(fitted)
+Box.test(fitted$residuals, type="Ljung-Box")
+```
+
+##8.11.12.E
+
+Forecasting the time series copper data.  we see that the forecast is essentially a straight line.  But the confidence levels are quite wide, meaning our predictions of a straight line is not that strong a prediction, the data could vary signifcantly.
+
+```{r}
+forecast(fitted)
+autoplot(forecast(fitted))
+```
+
+##8.11.12.F
+
+Compare the results of the ARIMA models to that achieved using ETS (error, trend, smoothing) model. From initial plotting, we see the forecast is quite noticeably lower ($\approx$ 3100 vs $\approx$ 3400), and the 80% and 95% tolerance levels are even slightly wider that the ARIMA's already wide intervals.
+
+Comparing MSE's from the two tests, we see that the ARIMA models errors are smaller, indicating that it is likely the ARIMA model is performing better.
+
+```{r}
+autoplot(forecast(ets(mcopper, lambda = lambda)))
+```
+
+```{r}
+fets <- function(x,h, lambda)
+{
+    forecast(ets(x, lambda = lambda), h = h)
+}
+
+farima <- function(x,h, lambda)
+{
+    forecast(auto.arima(x, lambda = lambda), h = h)
+}
+
+etsCopper <- tsCV(mcopper, fets, h=1, lambda = lambda)
+arimaCopper <- tsCV(mcopper, farima, h=1, lambda = lambda)
+
+mean(etsCopper^2, na.rm=TRUE)
+mean(arimaCopper^2, na.rm=TRUE)
+
+```
 
