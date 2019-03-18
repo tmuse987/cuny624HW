@@ -19,8 +19,10 @@ library(fpp2)
 library(gridExtra)
 library(urca)
 library(tseries)
-
-
+library(caret)
+library(ggcorrplot)
+library(VIM)
+library(mice)
 ```
 
 ##### <span style="color:blue"><b><u>HA# 2.3</u></b></span>
@@ -158,11 +160,28 @@ ggAcf(ddj)
 
 For white noise series, each autocorelation is expected to be close to zero.If one or more large spikes are outside these bounds of blue dotted lines, or if more than 5% of spikes are outside this bounds,then series is not a white noise. In our case,all the autocorelations lie within these limits,confirming that the data is white noise.
 
-
-
 ##### <span style="color:blue"><b><u>HA# 3.1</u></b></span>
 ![](Question_04_HA3.1.PNG)
 ```{r}
+# - usnetelec
+lambda_usnetelec = round(BoxCox.lambda(usnetelec), 4)
+print(c("Lambda for usnetelec: ", lambda_usnetelec))
+autoplot(BoxCox(usnetelec, lambda_usnetelec), colour = 'red')
+
+# - usgdp
+lambda_usgdp = round(BoxCox.lambda(usgdp), 4)
+print(c("Lambda for usgdp: ", lambda_usgdp))
+autoplot(BoxCox(usgdp, lambda_usgdp), colour = 'brown')
+
+# - mcopper
+lambda_mcopper = round(BoxCox.lambda(mcopper), 4)
+print(c("Lambda for mcopper: ", lambda_mcopper))
+autoplot(BoxCox(mcopper, lambda_mcopper), colour = 'blue')
+
+# - enplanements
+lambda_enplanements = round(BoxCox.lambda(enplanements), 4)
+print(c("Lambda for enplanements: ", lambda_enplanements))
+autoplot(BoxCox(enplanements, lambda_enplanements), colour = 'darkgreen')
 ```
 
 ##### <span style="color:blue"><b><u>HA# 3.8</u></b></span>
@@ -426,13 +445,131 @@ From the above forescast plot we can see that the forecasts from stlf function a
 
 ##### <span style="color:blue"><b><u>KJ# 3.1</u></b></span>
 ![](Question_08_KJ3.1.PNG)
+
+(a) Using visualizations, explore the predictor variables to understand their distributions as well as the relationships between predictors.
 ```{r}
+data(Glass)
+str(Glass)
+head(Glass)
+
+glass_df1 = gather(Glass, Attribute, Value, RI:Fe)
+glass_df1 = filter(glass_df1, Attribute != 'Id')
+glass_df1 = mutate(glass_df1, Attribute = forcats::as_factor(Attribute))
+head(glass_df1)
+
+ggplot(data = glass_df1, aes(x = Value)) + 
+geom_histogram(bins = 25, alpha = 0.5, fill="#00AAFF", col = "#0000FF") +
+facet_wrap(~ Attribute, scales = "free") + 
+ylab("Count") + ggtitle("Distribution of Glass Attributes") 
 ```
+
+<li> Predictor variables `RI` and `NA` are right-skewed. </li> 
+<li> Predictor `Mg` shows a left-skewness accompanied by a large number of zero-value observations.</li> 
+<li> Predictor `Al` and `Si` have symmetrical distributed.</li> 
+<li> Predictor `K` is strongly right-skewed though there are some non-zero values.</li> 
+<li> Predictor `Ca` is also right-skewed but to a lesser degree.</li> 
+<li> predictor variables `Ba` and `Fe` are heavily right-skewed and have a very high number of zero observations. </li> 
+
+The following plot shows the correlation between predictor variables:
+
+```{r}
+glass_df2 = select(Glass,  matches("RI|Na|Mg|Al|Si|K|Ca|Ba|Fe"))
+corr <- round(cor(glass_df2), 4)
+ggcorrplot(corr, title = "Correlation of Glass Attributes", hc.order = TRUE, type = "lower", lab = TRUE)
+```
+
+We can observe the following from the correlation plot:
+
+<li> There is a high positive correlation `(0.81)` between `RI` and `Ca`. </li>
+<li> The strongest positive correlation not involving the `RI` predictor is (`0.48`) between `Al` and `Ba`. </li>
+<li> The strongest negative correlation (`-0.54`) exists between `RI and Si`, followed by `-0.49` between `Ba` and `Mg`. </li>
+<li> There are five predictor pairs with correlation of absolute value less than 0.05.</li> <br>
+
+(b) Do there appear to be any outliers in the data? Are any predictors skewed?
+
+```{r}
+glass_df3 = gather(Glass, Attribute, Value, RI:Fe)
+glass_df3 = filter(glass_df3, Attribute != 'Id')
+glass_df3 = mutate(glass_df3, Attribute = forcats::as_factor(Attribute))
+head(glass_df3)
+
+ggplot(data = glass_df3, aes(x = Attribute, y = Value)) + 
+geom_boxplot(fill="#FF9999", col = "#000099") + coord_flip() + 
+facet_wrap(~ Attribute, scales = "free") + ggtitle("Distribution of Glass Attribute") + 
+scale_x_discrete("", breaks = NULL, labels = NULL)
+```
+
+We notice from the boxplot that that there are a number of outliers in each predictor except `Mg`. The outliers for predictor variables `K`, `Ba` and `Fe` are strongly right-skewed. 
+<br>
+The number of outliers by predictor is calculated, where an outlier $x$ is defined by the criteria  $x$ $<$ $Q1(x)$ - $1.5*IQR(x)$ or $x$ $>$ $Q3(x)$ $+$ $1.5*IQR(x)$, where $Q1$, $Q3$ and $IQR$ are the first quartile, third quartile, and interquartile range respectively, of the predictor $x$. 
+
+```{r}
+summarize_all(glass_df2, .funs = (~sum(. < quantile(., 0.25) - 1.5 * IQR(.) | . > quantile(., 0.75) + 1.5 * IQR(.))))
+```
+
+(c) Are there any relevant transformations of one or more predictors that might improve the classification model? <br>
+A Box-Cox transformation may improve the classification model by reducing or removing the skew for the skewed predictors. For those predictors that have a high concentrations of outliers, a spatial sign transformation may be useful if the model is sensitive to outliers.
 
 ##### <span style="color:blue"><b><u>KJ# 3.2</u></b></span>
 ![](Question_09_KJ3.2.PNG)
+
+a) Investigate the frequency distributions for the categorical predictors. Are any of the distributions degenerate in the ways disscused in chapter 3?
+
+Degenerate distributions is a distribution where the predictor variable has a single unique value (zero variance) or a handful of unique values that occur with very low frequencies (near-zero variance). 
+
+<li> smoothScatter() function produces a smoothed color density representation of a scatterplot, obtained through a (2D) kernel density estimate. This is very useful for examining categorical data. </li>
+
+<li> nearZeroVar() function from the caret library examines the uniqueness of data and returns a table indicating whether each variable has zero or near-zero variance. </li>
+
 ```{r}
+data(Soybean)
+str(Soybean)
+head(Soybean)
+
+soybean_df <- Soybean[,2:36]
+par(mfrow = c(3, 6))
+for (i in 1:ncol(soybean_df)) {
+  smoothScatter(soybean_df[ ,i], ylab = names(soybean_df[i]))
+}
 ```
+
+```{r}
+nearZeroVar(soybean_df, names = TRUE, saveMetrics=T)
+```
+
+From the Smoothed Density Scatterplots we notice that all variables have few unique values. There are a few that could possibly be degenerate due to the low frequencies in some of the values. The two prominent examples are `mycelium` and `sclerotia`. The Smoothed Density Scatterplot for those variables shows one solid color across the whole chart. The variables `leaf.mild` and `int.discolor` appear to show near-zero variance as well, but running the nearZeroVar() function on the data shows that only `mycelium`, `sclerotia`, and `leaf.mild` have near-zero variance. We also notice that no variable has zero variance.
+
+(b) Roughly 18% of the data are missing. Are there particular predictors that are more likely to be missing? Is the pattern of missing data related to
+the classes? <br>
+
+The `aggr` function plots and calculates the amount of missing values in each variable. The visualizations produced by the `aggr` function show a bar chart with the proportion of missing data per variable as well as a grid with the proportion of missing data for variable combinations. 
+
+```{r}
+aggr(Soybean, prop = c(T, T), bars=T, numbers=T, sortVars=T)
+
+Soybean %>%
+  mutate(Total = n()) %>% 
+  filter(!complete.cases(.)) %>%
+  group_by(Class) %>%
+  mutate(Missing = n(), Proportion=Missing/Total) %>%
+  select(Class, Missing, Proportion) %>%
+  unique()
+```
+
+From the bar chart we notice that several predictors variables have over 15% of their values missing. The grid shows the combination of all with 82% of data not missing (which means 18% missing) as the problem stated. The remainder of the grid shows missing data for variable combinations with each row highlighting the missing values for the group of variables detailed in the x-axis. 
+
+The are only four more, out of the eighteen other, variables with incomplete cases. The majority of the missing values are in the phytophthora-rot class which has nearly 10% incomplete cases. The pattern of missing data is related to the classes. 
+
+(c) Develop a strategy for handling missing data, either by eliminating predictors or imputation. <br>
+
+The `mice` function conducts Multivariate Imputation by Chained Equations (MICE) on multivariate datasets with missing values. The function has over imputation 20 methods that can be applied to the data. The one used with these data is the predictive mean matching method. After the imputations are done, a complete dataset is created using the  `complete` function. The `aggr` function from the VIM package is used for comparison.
+
+```{r}
+imp <- mice(Soybean, method="pmm", printFlag=F, seed=624)
+aggr(complete(imp), prop = c(T, T), bars=T, numbers=T, sortVars=T)
+```
+
+The imputation method used here is Predictive Mean Matching (PMM) which "imputes missing values by means of the nearest-neighbor donor with distance based on the expected values of the missing variables conditional on the observed covariates."  After applying this imputation using the `mice` function, there are no missing data left in the data. The `aggr` function from the VIM package used in the previous example now shows no missing data in any variable.
 
 ##### <span style="color:blue"><b><u>HA# 7.5</u></b></span>
 ![](Question_10_HA7.5.PNG)
