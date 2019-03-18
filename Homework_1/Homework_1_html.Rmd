@@ -15,21 +15,138 @@ library(dplyr)
 library(ggplot2)
 library(forecast)
 library(fma)
+library(fpp2)
+library(gridExtra)
 ```
 
 ##### <span style="color:blue"><b><u>HA# 2.3</u></b></span>
 <div id="Question_01_HA2.3.PNG"><img src="Question_01_HA2.3.PNG" alt="Question_01_HA2.3.PNG"></div>
-```{r}
+#### a) You can read the data into R with the following script:
+
+```{r,echo = TRUE}
+retaildata <- readxl::read_excel("retail.xlsx", skip=1)
 ```
+
+The second argument (skip=1) is required because the Excel sheet has two header rows.
+
+### b) Select one of the time series as follows (but replace the column name with your own chosen column):
+
+```{r,echo = TRUE}
+myts <- ts(retaildata[,"A3349873A"],frequency=12, start=c(1982,4))
+head(myts)
+```
+
+### c) Explore your chosen retail time series using the following functions:
+
+autoplot(), ggseasonplot(), ggsubseriesplot(), gglagplot(), ggAcf()
+
+Can you spot any seasonality, cyclicity and trend? What do you learn about the series?
+
+```{r,echo = TRUE}
+autoplot(myts) +
+  ggtitle("Monthly retail data: Australia") +
+  xlab("Year") +
+  ylab("Thousands")
+```
+                                  
+                                   
+Time series plot reveals following features:
+
+1) There is continuous increment for business in retail sector data from 1982 to2012.
+
+2) Sudden dip was observed in year 2000 and  2010 may be due to resession and slowdown of market.
+
+3) Retail market shows dips for start of year and gradual highs towards end of it.
+
+```{r,echo = TRUE}
+ggseasonplot(myts, year.labels=TRUE, year.labels.left=TRUE) +
+  ylab("$ million") +
+  ggtitle("Seasonal plot: Retail data")
+```
+                                  
+A seasonal plot allows the underlaying pattern to be seen more clearly and are useful in identifying years in which the pattern changes.
+In our case, above plot makes it clear that there is large jump in retail sector by end of year , mostly in Nov and Dec.patterns also make us notice that there are 
+unsual dips in retail sector around Jun ,July.Seasonal plot is similar to time plot except the data are plotted against the individual "seasons" in which data were observed.There can also be variation made in plot using polar co-ordinates.
+
+```{r,echo = TRUE}
+ggseasonplot(myts, polar = TRUE) +
+  ylab("$ million") +
+  ggtitle("Seasonal plot: Retail data")
+```
+        
+                             
+
+```{r,echo = TRUE}
+ggsubseriesplot(myts) +
+  ylab("$ million") +
+  ggtitle("Seasonal subseries plot: antidiabetic drug sales")
+```
+                                   
+                                      
+Seasonality plot validates our clain that retail sector has maximum business in November and December each year.
+The horizontal line indicates means for each month.This form of plot enables the underlaying seasonal pattern to be seen clearly,also showing changes in seasonality over time.
+
+```{r,echo = TRUE}
+gglagplot(myts)
+```
+                              
+Figure shows Lagged scatterplots for monthly retail data.
+The relations are strongly positive for month 5,6,7 i.e May,June,July for lag 1,2,3,4 and strongly negative for month 5 in lag 5,6,7.
+
+```{r,echo = TRUE}
+
+ggAcf(window(myts),start = 1982)
+```
+                            
+                                 
+Figure 6 shows Autocorrelation function for monthly retail data for Australia.
+As we can observe there is no negative co-relation observed. The dashed blue lines indicate whether the correlations are significantly different from zero.
 
 ##### <span style="color:blue"><b><u>HA# 2.7</u></b></span>
 <div id="Question_02_HA2.7.PNG"><img src="Question_02_HA2.7.PNG" alt="Question_02_HA2.7.PNG"></div>
-```{r}
+```{r,echo = TRUE}
+myts1 <- ts(arrivals[,"Japan"])
+a <- autoplot(myts1) + ggtitle("Arrivals to Australia from Japan") + ylab("Thousands")
+myts2 <- ts(arrivals[,"NZ"])
+b <- autoplot(myts2) + ggtitle("Arrivals to Australia from NZ") + ylab("Thousands")
+myts3 <- ts(arrivals[,"UK"])
+c <- autoplot(myts3) + ggtitle("Arrivals to Australia from UK") + ylab("Thousands")
+myts4 <- ts(arrivals[,"US"])
+d <- autoplot(myts4) + ggtitle("Arrivals to Australia from US") + ylab("Thousands")
+grid.arrange(a,b,c,d, nrow = 2)
 ```
+                                
+                                 
+```{r,echo = TRUE}
+a1 <- ggseasonplot(arrivals[,"Japan"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for Japan")
+b1 <- ggseasonplot(arrivals[,"NZ"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for NZ")
+c1 <- ggseasonplot(arrivals[,"UK"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for UK")
+d1 <- ggseasonplot(arrivals[,"US"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for US")
+grid.arrange(a1,b1,c1,d1, nrow = 2)
+```
+
+                               
+The most unusual observation is obsereved for arrival data in 'UK' for Q2 and Q3.The arrival numbers are drastically down but gradually increased in Q4.At the same time,
+New zealand shows highest arrival rates for Q3.
+
+```{r,echo = TRUE}
+a2 <- ggsubseriesplot(arrivals[,"Japan"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for Japan")
+b2 <- ggsubseriesplot(arrivals[,"NZ"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for NZ")
+c2 <- ggsubseriesplot(arrivals[,"UK"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for UK")
+d2 <- ggsubseriesplot(arrivals[,"US"]) + ylab("Thousand") +ggtitle("Seasonal plot:Arrivals data for US")
+grid.arrange(a2,b2,c2,d2, nrow = 2) 
+```
+                                    
+                                    
+
+Seasonal subseries plot emphasises theseasonal patterns of data.The horizontal lines indicate means for each quarter.This form of plot enables the underlaying seasonal pattern to be seen clearly ,and also shows the changes in seasonality over time.If we observe seasonal plots for all four countries,New zealand has the highest rate of arrival data for all four quarters.UK seems to have lowest arrival rates for Q2 and Q3.
 
 ##### <span style="color:blue"><b><u>HA# 2.10</u></b></span>
 <div id="Question_03_HA2.10.PNG"><img src="Question_03_HA2.10.PNG" alt="Question_03_HA2.10.PNG"></div>
 ```{r}
+ddj <- diff(dj)
+autoplot(ddj)
+ggAcf(ddj)
 ```
 
 ##### <span style="color:blue"><b><u>HA# 3.1</u></b></span>
