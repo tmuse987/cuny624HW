@@ -1,0 +1,111 @@
+---
+title: 'DATA 624 Spring 2019: Project-1'
+author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
+date: "March 19, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 3000)
+```
+
+```{r}
+library(utils)
+library('readxl')
+library('xlsx')
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(forecast)
+library(fma)
+library(fpp2)
+library(tseries)
+library(ggcorrplot)
+```
+
+#### <span style="color:red"><b><u>Overview</u></b></span>
+
+
+#### <span style="color:red"><b><u>Load Dataset</u></b></span>
+
+```{r}
+project_in_df <- data.frame(read_excel("Project1data.xls", sheet = "Set for Class"))
+project_in_df = mutate(project_in_df, datetime=as.Date(SeriesInd, origin="1899-12-30"))
+project_in_df = project_in_df[c(1, 8, 2, 3, 4, 5, 6, 7)]
+
+head(project_in_df)
+nrow(project_in_df)
+
+# Create separate dataframes for each group
+group_S01_df = filter(project_in_df, group == 'S01')
+group_S02_df = filter(project_in_df, group == 'S02')
+group_S03_df = filter(project_in_df, group == 'S03')
+group_S04_df = filter(project_in_df, group == 'S04')
+group_S05_df = filter(project_in_df, group == 'S05')
+group_S06_df = filter(project_in_df, group == 'S06')
+
+# Select relevant columns for each group
+group_S01_df = select (group_S01_df, matches("SeriesInd|datetime|group|Var01|Var02"))
+group_S02_df = select (group_S02_df, matches("SeriesInd|datetime|group|Var02|Var03"))
+group_S03_df = select (group_S03_df, matches("SeriesInd|datetime|group|Var05|Var07"))
+group_S04_df = select (group_S04_df, matches("SeriesInd|datetime|group|Var01|Var02"))
+group_S05_df = select (group_S05_df, matches("SeriesInd|datetime|group|Var02|Var03"))
+group_S06_df = select (group_S06_df, matches("SeriesInd|datetime|group|Var05|Var07"))
+
+# Check number of rows
+print (c(nrow(group_S01_df), nrow(group_S02_df), nrow(group_S03_df), nrow(group_S04_df), nrow(group_S05_df), nrow(group_S06_df)))
+
+# Verify dataframes
+head(project_in_df, 20)
+head(group_S01_df, 20)
+head(group_S02_df, 20)
+head(group_S03_df, 20)
+head(group_S04_df, 20)
+head(group_S05_df, 20)
+head(group_S06_df, 20)
+```
+
+
+#### <span style="color:red"><b><u>Exploratory Data Analysis</u></b></span>
+```{r}
+```
+
+#### <span style="color:red"><b><u>Cleanup Dataset</u></b></span>
+
+
+#### <span style="color:red"><b><u>Build Model</u></b></span>
+
+
+#### <span style="color:red"><b><u>Evaluate Model</u></b></span>
+
+
+#### <span style="color:red"><b><u>Group S01 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S02 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S03 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S04 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S05 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S06 Forecast</u></b></span>
+
+
+#### <span style="color:red"><b><u>Export Results</u></b></span>
+```{r}
+write.xlsx(project_in_df, file = "output.xls", sheetName = "Set for Class", row.names=FALSE, append = FALSE)
+write.xlsx(group_S01_df, file = "output.xls", sheetName = "S01", row.names=FALSE, append = TRUE)
+write.xlsx(group_S02_df, file = "output.xls", sheetName = "S02", row.names=FALSE, append = TRUE)
+write.xlsx(group_S03_df, file = "output.xls", sheetName = "S03", row.names=FALSE, append = TRUE)
+write.xlsx(group_S04_df, file = "output.xls", sheetName = "S04", row.names=FALSE, append = TRUE)
+write.xlsx(group_S05_df, file = "output.xls", sheetName = "S05", row.names=FALSE, append = TRUE)
+write.xlsx(group_S06_df, file = "output.xls", sheetName = "S06", row.names=FALSE, append = TRUE)
+
+```
+
+#### <span style="color:red"><b><u>Conclusion</u></b></span>
+
+#### <span style="color:red"><b><u>References</u></b></span>
+
+
