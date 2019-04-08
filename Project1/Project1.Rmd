@@ -1,3 +1,4 @@
+
 ---
 title: 'DATA 624 Spring 2019: Project-1'
 author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
@@ -31,7 +32,7 @@ library(ggcorrplot)
 #### <span style="color:red"><b><u>Overview</u></b></span>
 
 
-#### <span style="color:red"><b><u>Load Dataset</u></b></span>
+#### <span style="color:red"><b><u>Load Dataset and Clean</u></b></span>
 
 ```{r}
 project_in_df <- data.frame(read_excel("Project1data.xls", sheet = "Set for Class"))
@@ -48,6 +49,54 @@ group_S03_df = filter(project_in_df, group == 'S03')
 group_S04_df = filter(project_in_df, group == 'S04')
 group_S05_df = filter(project_in_df, group == 'S05')
 group_S06_df = filter(project_in_df, group == 'S06')
+
+#remove forecast cells for now
+
+group_S01_df <- slice(group_S01_df, 1:1622) 
+group_S02_df <- slice(group_S02_df, 1:1622) 
+group_S03_df <- slice(group_S03_df, 1:1622) 
+group_S04_df <- slice(group_S04_df, 1:1622) 
+group_S05_df <- slice(group_S05_df, 1:1622) 
+group_S06_df <- slice(group_S06_df, 1:1622)
+
+
+#check for rows with NA's
+group_S01_df[rowSums(is.na(group_S01_df))>0,]
+group_S02_df[rowSums(is.na(group_S02_df))>0,]
+group_S03_df[rowSums(is.na(group_S03_df))>0,]
+group_S04_df[rowSums(is.na(group_S04_df))>0,]
+group_S05_df[rowSums(is.na(group_S05_df))>0,]
+group_S06_df[rowSums(is.na(group_S06_df))>0,]
+
+
+#since we have NA's we will take the next value in sequence, e.g., if row 1600 is NA for Var01, take value from row 1601
+#hopefully, since these are stock values, the value from the next day for the few missing values we have, should be close enough
+
+#mutate them from next value
+removeNAs <- function(dfTs)
+{
+
+    while(nrow(dfTs[rowSums(is.na(dfTs))>0,]) > 0)
+    {           
+    
+        dfTs <- transmute(dfTs, 
+                      SeriesInd = SeriesInd,
+                      Var01 = if_else(is.na(Var01), lead(Var01), Var01),
+                      Var02 = if_else(is.na(Var02), lead(Var02), Var02),
+                      Var03 = if_else(is.na(Var03), lead(Var03), Var03),
+                      Var05 = if_else(is.na(Var05), lead(Var05), Var05),
+                      Var07 = if_else(is.na(Var07), lead(Var07), Var07))
+    }
+    print(dfTs[rowSums(is.na(dfTs))>0,])
+    return(dfTs)
+}
+
+group_S01_df <- removeNAs(group_S01_df)
+group_S02_df <- removeNAs(group_S02_df)
+group_S03_df <- removeNAs(group_S03_df)
+group_S04_df <- removeNAs(group_S04_df)
+group_S05_df <- removeNAs(group_S05_df)
+group_S06_df <- removeNAs(group_S06_df)
 
 # Select relevant columns for each group
 group_S01_df = select (group_S01_df, matches("SeriesInd|datetime|group|Var01|Var02"))
@@ -69,7 +118,6 @@ head(group_S04_df, 20)
 head(group_S05_df, 20)
 head(group_S06_df, 20)
 ```
-
 
 #### <span style="color:red"><b><u>Exploratory Data Analysis</u></b></span>
 ```{r}

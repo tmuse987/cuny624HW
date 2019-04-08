@@ -193,12 +193,13 @@ $(document).ready(function () {
 
 
 <pre class="r"><code>library(utils)
-library('readxl')</code></pre>
-<pre><code>## Warning: package 'readxl' was built under R version 3.5.3</code></pre>
-<pre class="r"><code>library('xlsx')
-
-library(tidyr)
-library(dplyr)</code></pre>
+library('readxl')
+library('xlsx')</code></pre>
+<pre><code>## Warning: package 'xlsx' was built under R version 3.5.3</code></pre>
+<pre class="r"><code>library(tidyr)</code></pre>
+<pre><code>## Warning: package 'tidyr' was built under R version 3.5.3</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## Warning: package 'dplyr' was built under R version 3.5.3</code></pre>
 <pre><code>## 
 ## Attaching package: 'dplyr'</code></pre>
 <pre><code>## The following objects are masked from 'package:stats':
@@ -218,8 +219,8 @@ library(ggcorrplot)</code></pre>
 <div id="overview" class="section level4">
 <h4><span style="color:red"><b><u>Overview</u></b></span></h4>
 </div>
-<div id="load-dataset" class="section level4">
-<h4><span style="color:red"><b><u>Load Dataset</u></b></span></h4>
+<div id="load-dataset-and-clean" class="section level4">
+<h4><span style="color:red"><b><u>Load Dataset and Clean</u></b></span></h4>
 <pre class="r"><code>project_in_df &lt;- data.frame(read_excel(&quot;Project1data.xls&quot;, sheet = &quot;Set for Class&quot;))
 project_in_df = mutate(project_in_df, datetime=as.Date(SeriesInd, origin=&quot;1899-12-30&quot;))
 project_in_df = project_in_df[c(1, 8, 2, 3, 4, 5, 6, 7)]
@@ -242,7 +243,96 @@ group_S04_df = filter(project_in_df, group == 'S04')
 group_S05_df = filter(project_in_df, group == 'S05')
 group_S06_df = filter(project_in_df, group == 'S06')
 
-# Select relevant columns for each group
+#remove forecast cells for now
+
+group_S01_df &lt;- slice(group_S01_df, 1:1622) 
+group_S02_df &lt;- slice(group_S02_df, 1:1622) 
+group_S03_df &lt;- slice(group_S03_df, 1:1622) 
+group_S04_df &lt;- slice(group_S04_df, 1:1622) 
+group_S05_df &lt;- slice(group_S05_df, 1:1622) 
+group_S06_df &lt;- slice(group_S06_df, 1:1622)
+
+
+#check for rows with NA's
+group_S01_df[rowSums(is.na(group_S01_df))&gt;0,]</code></pre>
+<pre><code>##      SeriesInd   datetime group Var01   Var02 Var03 Var05 Var07
+## 1537     42897 2017-06-11   S01    NA 7329600    NA    NA    NA
+## 1538     42898 2017-06-12   S01    NA 6121400    NA    NA    NA
+## 1607     42997 2017-09-19   S01 58.83 6337000    NA    NA    NA
+## 1608     43000 2017-09-22   S01 59.28 3690900    NA    NA    NA</code></pre>
+<pre class="r"><code>group_S02_df[rowSums(is.na(group_S02_df))&gt;0,]</code></pre>
+<pre><code>##      SeriesInd   datetime group Var01    Var02 Var03 Var05 Var07
+## 1537     42897 2017-06-11   S02    NA 38160300    NA    NA    NA
+## 1538     42898 2017-06-12   S02    NA 45801300    NA    NA    NA
+## 1607     42997 2017-09-19   S02 13.26 19465000    NA    NA    NA
+## 1608     43000 2017-09-22   S02 13.20 16234300    NA    NA    NA</code></pre>
+<pre class="r"><code>group_S03_df[rowSums(is.na(group_S03_df))&gt;0,]</code></pre>
+<pre><code>##      SeriesInd   datetime group Var01    Var02 Var03 Var05 Var07
+## 1537     42897 2017-06-11   S03    NA 42343600    NA    NA    NA
+## 1538     42898 2017-06-12   S03    NA 50074700    NA    NA    NA
+## 1607     42997 2017-09-19   S03 95.43 32026000    NA    NA    NA
+## 1608     43000 2017-09-22   S03 97.19 38018600    NA    NA    NA</code></pre>
+<pre class="r"><code>group_S04_df[rowSums(is.na(group_S04_df))&gt;0,]</code></pre>
+<pre><code>##      SeriesInd   datetime group Var01    Var02 Var03 Var05 Var07
+## 1537     42897 2017-06-11   S04    NA  9098800    NA    NA    NA
+## 1538     42898 2017-06-12   S04    NA 11188200    NA    NA    NA
+## 1607     42997 2017-09-19   S04 36.72 34330700    NA    NA    NA
+## 1608     43000 2017-09-22   S04 36.95  7785800    NA    NA    NA</code></pre>
+<pre class="r"><code>group_S05_df[rowSums(is.na(group_S05_df))&gt;0,]</code></pre>
+<pre><code>##      SeriesInd   datetime group Var01    Var02 Var03 Var05 Var07
+## 795      41821 2014-07-01   S05    NA       NA    NA    NA    NA
+## 1537     42897 2017-06-11   S05    NA 16610900    NA    NA    NA
+## 1538     42898 2017-06-12   S05    NA 19331600    NA    NA    NA
+## 1607     42997 2017-09-19   S05  90.4 13191900    NA    NA    NA
+## 1608     43000 2017-09-22   S05  89.9 11766100    NA    NA    NA</code></pre>
+<pre class="r"><code>group_S06_df[rowSums(is.na(group_S06_df))&gt;0,]</code></pre>
+<pre><code>##      SeriesInd   datetime group Var01    Var02 Var03 Var05 Var07
+## 20       40697 2011-06-03   S06    NA       NA    NA    NA    NA
+## 1537     42897 2017-06-11   S06    NA 19885500    NA    NA    NA
+## 1538     42898 2017-06-12   S06    NA 32570900    NA    NA    NA
+## 1607     42997 2017-09-19   S06 49.21 13222800    NA    NA    NA
+## 1608     43000 2017-09-22   S06 48.88 10644000    NA    NA    NA</code></pre>
+<pre class="r"><code>#since we have NA's we will take the next value in sequence, e.g., if row 1600 is NA for Var01, take value from row 1601
+#hopefully, since these are stock values, the value from the next day for the few missing values we have, should be close enough
+
+#mutate them from next value
+removeNAs &lt;- function(dfTs)
+{
+
+    while(nrow(dfTs[rowSums(is.na(dfTs))&gt;0,]) &gt; 0)
+    {           
+    
+        dfTs &lt;- transmute(dfTs, 
+                      SeriesInd = SeriesInd,
+                      Var01 = if_else(is.na(Var01), lead(Var01), Var01),
+                      Var02 = if_else(is.na(Var02), lead(Var02), Var02),
+                      Var03 = if_else(is.na(Var03), lead(Var03), Var03),
+                      Var05 = if_else(is.na(Var05), lead(Var05), Var05),
+                      Var07 = if_else(is.na(Var07), lead(Var07), Var07))
+    }
+    print(dfTs[rowSums(is.na(dfTs))&gt;0,])
+    return(dfTs)
+}
+
+group_S01_df &lt;- removeNAs(group_S01_df)</code></pre>
+<pre><code>## [1] SeriesInd Var01     Var02     Var03     Var05     Var07    
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>group_S02_df &lt;- removeNAs(group_S02_df)</code></pre>
+<pre><code>## [1] SeriesInd Var01     Var02     Var03     Var05     Var07    
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>group_S03_df &lt;- removeNAs(group_S03_df)</code></pre>
+<pre><code>## [1] SeriesInd Var01     Var02     Var03     Var05     Var07    
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>group_S04_df &lt;- removeNAs(group_S04_df)</code></pre>
+<pre><code>## [1] SeriesInd Var01     Var02     Var03     Var05     Var07    
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>group_S05_df &lt;- removeNAs(group_S05_df)</code></pre>
+<pre><code>## [1] SeriesInd Var01     Var02     Var03     Var05     Var07    
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code>group_S06_df &lt;- removeNAs(group_S06_df)</code></pre>
+<pre><code>## [1] SeriesInd Var01     Var02     Var03     Var05     Var07    
+## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre class="r"><code># Select relevant columns for each group
 group_S01_df = select (group_S01_df, matches(&quot;SeriesInd|datetime|group|Var01|Var02&quot;))
 group_S02_df = select (group_S02_df, matches(&quot;SeriesInd|datetime|group|Var02|Var03&quot;))
 group_S03_df = select (group_S03_df, matches(&quot;SeriesInd|datetime|group|Var05|Var07&quot;))
@@ -252,7 +342,7 @@ group_S06_df = select (group_S06_df, matches(&quot;SeriesInd|datetime|group|Var0
 
 # Check number of rows
 print (c(nrow(group_S01_df), nrow(group_S02_df), nrow(group_S03_df), nrow(group_S04_df), nrow(group_S05_df), nrow(group_S06_df)))</code></pre>
-<pre><code>## [1] 1762 1762 1762 1762 1762 1762</code></pre>
+<pre><code>## [1] 1622 1622 1622 1622 1622 1622</code></pre>
 <pre class="r"><code># Verify dataframes
 head(project_in_df, 20)</code></pre>
 <pre><code>##    SeriesInd   datetime group    Var01     Var02    Var03    Var05    Var07
@@ -277,137 +367,137 @@ head(project_in_df, 20)</code></pre>
 ## 19     40672 2011-05-09   S03 30.28572 119282800 29.86429 30.25000 30.08286
 ## 20     40672 2011-05-09   S02 11.69000 130201700 11.32000 11.46000 11.66000</code></pre>
 <pre class="r"><code>head(group_S01_df, 20)</code></pre>
-<pre><code>##    SeriesInd   datetime group Var01    Var02
-## 1      40669 2011-05-06   S01 26.61 10369300
-## 2      40670 2011-05-07   S01 26.30 10943800
-## 3      40671 2011-05-08   S01 26.03  8933800
-## 4      40672 2011-05-09   S01 25.84 10775400
-## 5      40673 2011-05-10   S01 26.34 12875600
-## 6      40676 2011-05-13   S01 26.49 11677000
-## 7      40677 2011-05-14   S01 26.03 21165300
-## 8      40678 2011-05-15   S01 25.16 18809200
-## 9      40679 2011-05-16   S01 25.00 22908400
-## 10     40680 2011-05-17   S01 24.77 20359100
-## 11     40684 2011-05-21   S01 24.78 11783800
-## 12     40685 2011-05-22   S01 24.61 13253500
-## 13     40686 2011-05-23   S01 24.88 18407800
-## 14     40687 2011-05-24   S01 24.17 21806400
-## 15     40690 2011-05-27   S01 23.82 20192100
-## 16     40691 2011-05-28   S01 23.90 19646700
-## 17     40692 2011-05-29   S01 23.66 19535100
-## 18     40693 2011-05-30   S01 23.51 20198600
-## 19     40694 2011-05-31   S01 23.37 23137300
-## 20     40697 2011-06-03   S01 23.08 13199000</code></pre>
+<pre><code>##    SeriesInd Var01    Var02
+## 1      40669 26.61 10369300
+## 2      40670 26.30 10943800
+## 3      40671 26.03  8933800
+## 4      40672 25.84 10775400
+## 5      40673 26.34 12875600
+## 6      40676 26.49 11677000
+## 7      40677 26.03 21165300
+## 8      40678 25.16 18809200
+## 9      40679 25.00 22908400
+## 10     40680 24.77 20359100
+## 11     40684 24.78 11783800
+## 12     40685 24.61 13253500
+## 13     40686 24.88 18407800
+## 14     40687 24.17 21806400
+## 15     40690 23.82 20192100
+## 16     40691 23.90 19646700
+## 17     40692 23.66 19535100
+## 18     40693 23.51 20198600
+## 19     40694 23.37 23137300
+## 20     40697 23.08 13199000</code></pre>
 <pre class="r"><code>head(group_S02_df, 20)</code></pre>
-<pre><code>##    SeriesInd   datetime group     Var02 Var03
-## 1      40669 2011-05-06   S02  60855800 10.05
-## 2      40670 2011-05-07   S02 215620200 10.40
-## 3      40671 2011-05-08   S02 200070600 11.13
-## 4      40672 2011-05-09   S02 130201700 11.32
-## 5      40673 2011-05-10   S02 130463000 11.46
-## 6      40676 2011-05-13   S02 170626200 11.78
-## 7      40677 2011-05-14   S02 162995900 11.72
-## 8      40678 2011-05-15   S02 154527100 11.47
-## 9      40679 2011-05-16   S02 116531200 11.51
-## 10     40680 2011-05-17   S02  96149800 11.55
-## 11     40684 2011-05-21   S02  65934000 11.46
-## 12     40685 2011-05-22   S02  71649500 11.50
-## 13     40686 2011-05-23   S02 121451400 11.01
-## 14     40687 2011-05-24   S02 161530100 10.41
-## 15     40690 2011-05-27   S02 121621500 10.61
-## 16     40691 2011-05-28   S02 108250500 11.07
-## 17     40692 2011-05-29   S02 105091600 11.22
-## 18     40693 2011-05-30   S02 203320000 11.27
-## 19     40694 2011-05-31   S02 159741200 10.70
-## 20     40697 2011-06-03   S02  82748200 10.93</code></pre>
+<pre><code>##    SeriesInd     Var02 Var03
+## 1      40669  60855800 10.05
+## 2      40670 215620200 10.40
+## 3      40671 200070600 11.13
+## 4      40672 130201700 11.32
+## 5      40673 130463000 11.46
+## 6      40676 170626200 11.78
+## 7      40677 162995900 11.72
+## 8      40678 154527100 11.47
+## 9      40679 116531200 11.51
+## 10     40680  96149800 11.55
+## 11     40684  65934000 11.46
+## 12     40685  71649500 11.50
+## 13     40686 121451400 11.01
+## 14     40687 161530100 10.41
+## 15     40690 121621500 10.61
+## 16     40691 108250500 11.07
+## 17     40692 105091600 11.22
+## 18     40693 203320000 11.27
+## 19     40694 159741200 10.70
+## 20     40697  82748200 10.93</code></pre>
 <pre class="r"><code>head(group_S03_df, 20)</code></pre>
-<pre><code>##    SeriesInd   datetime group    Var05    Var07
-## 1      40669 2011-05-06   S03 30.49000 30.57286
-## 2      40670 2011-05-07   S03 30.65714 30.62571
-## 3      40671 2011-05-08   S03 30.62571 30.13857
-## 4      40672 2011-05-09   S03 30.25000 30.08286
-## 5      40673 2011-05-10   S03 30.04286 30.28286
-## 6      40676 2011-05-13   S03 30.40000 30.01571
-## 7      40677 2011-05-14   S03 29.88428 29.67429
-## 8      40678 2011-05-15   S03 29.69571 30.09286
-## 9      40679 2011-05-16   S03 30.01571 29.91857
-## 10     40680 2011-05-17   S03 30.13286 29.41857
-## 11     40684 2011-05-21   S03 29.76143 30.72000
-## 12     40685 2011-05-22   S03 30.70143 30.24714
-## 13     40686 2011-05-23   S03 30.29714 29.72429
-## 14     40687 2011-05-24   S03 29.54000 28.25000
-## 15     40690 2011-05-27   S03 28.93000 29.01000
-## 16     40691 2011-05-28   S03 29.42143 29.42000
-## 17     40692 2011-05-29   S03 29.55000 29.69714
-## 18     40693 2011-05-30   S03 29.27571 28.47000
-## 19     40694 2011-05-31   S03 28.72571 27.43714
-## 20     40697 2011-06-03   S03 27.48143 27.81857</code></pre>
+<pre><code>##    SeriesInd    Var05    Var07
+## 1      40669 30.49000 30.57286
+## 2      40670 30.65714 30.62571
+## 3      40671 30.62571 30.13857
+## 4      40672 30.25000 30.08286
+## 5      40673 30.04286 30.28286
+## 6      40676 30.40000 30.01571
+## 7      40677 29.88428 29.67429
+## 8      40678 29.69571 30.09286
+## 9      40679 30.01571 29.91857
+## 10     40680 30.13286 29.41857
+## 11     40684 29.76143 30.72000
+## 12     40685 30.70143 30.24714
+## 13     40686 30.29714 29.72429
+## 14     40687 29.54000 28.25000
+## 15     40690 28.93000 29.01000
+## 16     40691 29.42143 29.42000
+## 17     40692 29.55000 29.69714
+## 18     40693 29.27571 28.47000
+## 19     40694 28.72571 27.43714
+## 20     40697 27.48143 27.81857</code></pre>
 <pre class="r"><code>head(group_S04_df, 20)</code></pre>
-<pre><code>##    SeriesInd   datetime group Var01    Var02
-## 1      40669 2011-05-06   S04 17.20 16587400
-## 2      40670 2011-05-07   S04 17.23 11718100
-## 3      40671 2011-05-08   S04 17.30 16422000
-## 4      40672 2011-05-09   S04 16.90 31816300
-## 5      40673 2011-05-10   S04 16.76 15470000
-## 6      40676 2011-05-13   S04 16.83 16181900
-## 7      40677 2011-05-14   S04 16.86 15672400
-## 8      40678 2011-05-15   S04 16.98 16955600
-## 9      40679 2011-05-16   S04 17.23 16715600
-## 10     40680 2011-05-17   S04 17.25 18415000
-## 11     40684 2011-05-21   S04 16.96 15182600
-## 12     40685 2011-05-22   S04 16.68 14419500
-## 13     40686 2011-05-23   S04 16.58 21858400
-## 14     40687 2011-05-24   S04 16.21 25132800
-## 15     40690 2011-05-27   S04 16.11 19683700
-## 16     40691 2011-05-28   S04 16.17 43979400
-## 17     40692 2011-05-29   S04 16.49 41701000
-## 18     40693 2011-05-30   S04 15.96 30159500
-## 19     40694 2011-05-31   S04 15.67 39664600
-## 20     40697 2011-06-03   S04 15.30 29865700</code></pre>
+<pre><code>##    SeriesInd Var01    Var02
+## 1      40669 17.20 16587400
+## 2      40670 17.23 11718100
+## 3      40671 17.30 16422000
+## 4      40672 16.90 31816300
+## 5      40673 16.76 15470000
+## 6      40676 16.83 16181900
+## 7      40677 16.86 15672400
+## 8      40678 16.98 16955600
+## 9      40679 17.23 16715600
+## 10     40680 17.25 18415000
+## 11     40684 16.96 15182600
+## 12     40685 16.68 14419500
+## 13     40686 16.58 21858400
+## 14     40687 16.21 25132800
+## 15     40690 16.11 19683700
+## 16     40691 16.17 43979400
+## 17     40692 16.49 41701000
+## 18     40693 15.96 30159500
+## 19     40694 15.67 39664600
+## 20     40697 15.30 29865700</code></pre>
 <pre class="r"><code>head(group_S05_df, 20)</code></pre>
-<pre><code>##    SeriesInd   datetime group    Var02 Var03
-## 1      40669 2011-05-06   S05 27809100 68.19
-## 2      40670 2011-05-07   S05 30174700 68.80
-## 3      40671 2011-05-08   S05 35044700 69.34
-## 4      40672 2011-05-09   S05 27192100 69.42
-## 5      40673 2011-05-10   S05 24891800 69.22
-## 6      40676 2011-05-13   S05 30685000 69.65
-## 7      40677 2011-05-14   S05 31496700 69.52
-## 8      40678 2011-05-15   S05 24884400 69.26
-## 9      40679 2011-05-16   S05 18630800 69.35
-## 10     40680 2011-05-17   S05 29411900 68.65
-## 11     40684 2011-05-21   S05 26081900 68.42
-## 12     40685 2011-05-22   S05 34629500 67.93
-## 13     40686 2011-05-23   S05 39114000 66.50
-## 14     40687 2011-05-24   S05 39085500 66.00
-## 15     40690 2011-05-27   S05 29305100 65.69
-## 16     40691 2011-05-28   S05 34083300 65.50
-## 17     40692 2011-05-29   S05 35723500 65.00
-## 18     40693 2011-05-30   S05 37349800 64.57
-## 19     40694 2011-05-31   S05 40880500 64.02
-## 20     40697 2011-06-03   S05 37703000 65.35</code></pre>
+<pre><code>##    SeriesInd    Var02 Var03
+## 1      40669 27809100 68.19
+## 2      40670 30174700 68.80
+## 3      40671 35044700 69.34
+## 4      40672 27192100 69.42
+## 5      40673 24891800 69.22
+## 6      40676 30685000 69.65
+## 7      40677 31496700 69.52
+## 8      40678 24884400 69.26
+## 9      40679 18630800 69.35
+## 10     40680 29411900 68.65
+## 11     40684 26081900 68.42
+## 12     40685 34629500 67.93
+## 13     40686 39114000 66.50
+## 14     40687 39085500 66.00
+## 15     40690 29305100 65.69
+## 16     40691 34083300 65.50
+## 17     40692 35723500 65.00
+## 18     40693 37349800 64.57
+## 19     40694 40880500 64.02
+## 20     40697 37703000 65.35</code></pre>
 <pre class="r"><code>head(group_S06_df, 20)</code></pre>
-<pre><code>##    SeriesInd   datetime group Var05 Var07
-## 1      40669 2011-05-06   S06 27.02 27.32
-## 2      40670 2011-05-07   S06 27.27 28.07
-## 3      40671 2011-05-08   S06 28.03 28.11
-## 4      40672 2011-05-09   S06 28.12 29.13
-## 5      40673 2011-05-10   S06 28.90 28.86
-## 6      40676 2011-05-13   S06 29.09 28.80
-## 7      40677 2011-05-14   S06 28.47 28.08
-## 8      40678 2011-05-15   S06 27.99 28.58
-## 9      40679 2011-05-16   S06 28.50 28.99
-## 10     40680 2011-05-17   S06 28.82 28.08
-## 11     40684 2011-05-21   S06 27.93 28.28
-## 12     40685 2011-05-22   S06 28.02 27.82
-## 13     40686 2011-05-23   S06 27.98 28.00
-## 14     40687 2011-05-24   S06 27.97 27.26
-## 15     40690 2011-05-27   S06 27.45 27.66
-## 16     40691 2011-05-28   S06 27.45 26.99
-## 17     40692 2011-05-29   S06 26.90 28.20
-## 18     40693 2011-05-30   S06 28.28 28.45
-## 19     40694 2011-05-31   S06 28.44 28.43
-## 20     40697 2011-06-03   S06    NA    NA</code></pre>
+<pre><code>##    SeriesInd Var05 Var07
+## 1      40669 27.02 27.32
+## 2      40670 27.27 28.07
+## 3      40671 28.03 28.11
+## 4      40672 28.12 29.13
+## 5      40673 28.90 28.86
+## 6      40676 29.09 28.80
+## 7      40677 28.47 28.08
+## 8      40678 27.99 28.58
+## 9      40679 28.50 28.99
+## 10     40680 28.82 28.08
+## 11     40684 27.93 28.28
+## 12     40685 28.02 27.82
+## 13     40686 27.98 28.00
+## 14     40687 27.97 27.26
+## 15     40690 27.45 27.66
+## 16     40691 27.45 26.99
+## 17     40692 26.90 28.20
+## 18     40693 28.28 28.45
+## 19     40694 28.44 28.43
+## 20     40697 28.96 28.79</code></pre>
 </div>
 <div id="exploratory-data-analysis" class="section level4">
 <h4><span style="color:red"><b><u>Exploratory Data Analysis</u></b></span></h4>
