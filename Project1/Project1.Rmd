@@ -3,7 +3,9 @@
 title: 'DATA 624 Spring 2019: Project-1'
 author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
 date: "March 19, 2019"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -137,6 +139,107 @@ head(group_S06_df, 20)
 #### <span style="color:red"><b><u>Group S03 Forecast</u></b></span>
 #### <span style="color:red"><b><u>Group S04 Forecast</u></b></span>
 #### <span style="color:red"><b><u>Group S05 Forecast</u></b></span>
+
+###This Section is using ARIMA for now.
+
+First let's get the dataframe data into a timeseries for variable 02.
+The data is stored as a series of dates, 5 days with a break after, so essentially 52 weeks times 5 days will divide it up nicely into 7 years of data.  We will then fit the data using auto.arima to find the appropriate values for P,D,Q (p = the number of lag observations, d = degree of differencing, and q = size of the moving average window, for lagged forecast errors ).
+
+We see that a 1,1,3 model appears to be most appropriate.
+
+```{r}
+library(astsa)
+h <- 140
+TsVar02 <- ts(group_S05_df$Var02, frequency = 5*52)
+
+arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
+arimaFitVar02
+
+```
+We will use the package Applied Statistical Time Series Analysis (astsa) and it's wrapper module, sarima around the arima set of tools to do our forecasting.
+
+Looking at the residuals from the package output, we see that they look like white noise, which is what we hope, as we don't wish to see a pattern.  The ACF of the residuals look acceptable too.  There are a couple of small spikes just above the threshold of significance, but otherwise fine.
+
+Note the box test results show that there may still be correlation on the residuals as the 
+```{r}
+sarima(TsVar02, 1, 1, 3)
+
+fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+#save prediction into df
+group_S05_df[1623:1762,2] <- fSarima$pred
+
+```
+
+###ARIMA Fit for Var03
+Doing the same process for Var03, we see that a 2,1,1 model is best.
+
+```{r}
+library(astsa)
+h <- 140
+TsVar03 <- ts(group_S05_df$Var03, frequency = 5*52)
+
+arimaFitVar03 <- auto.arima(TsVar03, seasonal = FALSE)
+arimaFitVar03
+
+```
+
+```{r}
+fitArimaV03 <- sarima(TsVar03, 2, 1, 1, details = FALSE)
+
+ 
+##for some  reason this blows up if in ts with frequency of 260
+fSarima <- sarima.for(TsVar03[1:1622], n.ahead = 140, 2, 1, 1)
+fSarima$pred[1:20]
+#save prediction into df
+group_S05_df[1623:1762,3] <- fSarima$pred
+```
+
+###Attempted a box cox transform to see how that worked out, really other than scale is pretty similar
+```{r}
+bcTsVar02 <- BoxCox(TsVar02, lambda = "auto")
+fSarima <- sarima.for(bcTsVar02, 140, 1, 1, 3)
+
+```
+
+####Sanity checks for differencing.  Run some difference tests, we see that one difference is absolutely needed, and perhaps two differences could be warranted for var03 as one order of difference gives .07 value for the test statistic (i.e.it is greater than .05), but it is questionable, as extra differencing in itself can lead to errors.
+
+```{r}
+#Reset values
+TsVar02 <- ts(group_S05_df$Var02, frequency = 5*52)
+TsVar03 <- ts(group_S05_df$Var03, frequency = 5*52)
+
+library(urca)
+summary(ur.kpss(TsVar02))
+summary(ur.kpss(diff(TsVar02)))
+
+summary(ur.kpss(TsVar03))
+summary(ur.kpss(diff(TsVar03)))
+print("Do we actually need a second order of differencing?")
+summary(ur.kpss(diff(diff(TsVar03))))
+
+print("Checking for seasonality:")
+nsdiffs(TsVar02, test = "seas")
+nsdiffs(TsVar03, test = "seas")
+```
+Checking ACF grapsh for the p and q values.
+
+```{r}
+#113
+Acf(diff(TsVar02))
+pacf(diff(TsVar02))
+Acf(diff(TsVar03))
+pacf(diff(TsVar03))
+```
+Looking at the plots is seems like a (1,1,4) model might be better for Var02 considering the number of spikes in the acf graph.  Rerunning using that model, the box test results look better, althought the AIC numbers are virtually unchanged.
+
+The 2,1,1 based on the acf graphs looks reasonable for Var03.
+```{r}
+sarima(TsVar02, 4, 1, 4)
+sarima.for(TsVar02, 140, 4, 1,4)
+```
+
+
 #### <span style="color:red"><b><u>Group S06 Forecast</u></b></span>
 
 
