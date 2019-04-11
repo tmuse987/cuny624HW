@@ -1,0 +1,344 @@
+---
+title: 'DATA 624 Spring 2019: Project-1'
+author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
+date: "March 19, 2019"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 3000)
+```
+
+
+#### Introduction
+Data given is a de-identified Excel spreadsheet. Assignment is to perform the appropriate analysis to forecast several series for 140 periods.We are having 1622 periods for our analysis.We need to create model and forecast values for the following series.
+
+S01 – Forecast  Var01, Var02
+S02 – Forecast  Var02, Var03
+S03 – Forecast  Var05, Var07
+S04 – Forecast  Var01, Var02
+S05 – Forecast  Var02, Var03
+S06 – Forecast  Var05, Var07
+
+
+Loading all the required libraries.
+
+```{r,message=FALSE,warnings=FALSE}
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(gridExtra)
+```
+
+Read in data, which is just the Excel sheet saved as a CSV.
+
+```{r}
+data <- read.csv("Project1data.csv",header=TRUE)
+data$SeriesInd <- as.Date(data$SeriesInd,origin = "1899-12-30")
+project_in_df <- data
+```
+As part of data cleaning lets remove forecast cells for now
+
+
+```{r}
+project_in_df <- data[1:9732,]
+```
+
+Lets have a look at data
+```{r}
+summary(project_in_df)
+```
+
+From the above results can see missing values in all the variables,we need to impute NA's with some value.
+Var01 has 14,Var02 has 2,Var03 has 26,Var05 has 26 and Var07 has 26 missing values.
+
+Here we will be imputing these values with  the next value in sequence, e.g., if row 1600 is NA for Var01, take value from row 1601
+hopefully, since these are stock values, the value from the next day for the few missing values we have, should be close enough
+
+```{r}
+project_in_df[rowSums(is.na(project_in_df))>0,]
+while(nrow(project_in_df[rowSums(is.na(project_in_df))>0,]) > 0)
+{           
+    
+  project_in_df <- transmute(project_in_df, 
+                      SeriesInd = SeriesInd,group,
+                      Var01 = if_else(is.na(Var01), lead(Var01), Var01),
+                      Var02 = if_else(is.na(Var02), lead(Var02), Var02),
+                      Var03 = if_else(is.na(Var03), lead(Var03), Var03),
+                      Var05 = if_else(is.na(Var05), lead(Var05), Var05),
+                      Var07 = if_else(is.na(Var07), lead(Var07), Var07))
+    project_in_df[rowSums(is.na(project_in_df))>0,]
+}
+summary(project_in_df)
+```
+
+From the above summary results we can see all Null values are replaced
+
+
+# Create separate dataframes for each group
+```{r}
+group_S01_df = filter(project_in_df, group == 'S01')
+group_S02_df = filter(project_in_df, group == 'S02')
+group_S03_df = filter(project_in_df, group == 'S03')
+group_S04_df = filter(project_in_df, group == 'S04')
+group_S05_df = filter(project_in_df, group == 'S05')
+group_S06_df = filter(project_in_df, group == 'S06')
+```
+
+
+Checking for the missing values in our dataset
+
+```{r}
+group_S01_df[rowSums(is.na(group_S01_df))>0,]
+group_S02_df[rowSums(is.na(group_S02_df))>0,]
+group_S03_df[rowSums(is.na(group_S03_df))>0,]
+group_S04_df[rowSums(is.na(group_S04_df))>0,]
+group_S05_df[rowSums(is.na(group_S05_df))>0,]
+group_S06_df[rowSums(is.na(group_S06_df))>0,]
+```
+
+
+
+
+```{r}
+# Select relevant columns for each group
+group_S01_df = select (group_S01_df, matches("SeriesInd|datetime|group|Var01|Var02"))
+group_S02_df = select (group_S02_df, matches("SeriesInd|datetime|group|Var02|Var03"))
+group_S03_df = select (group_S03_df, matches("SeriesInd|datetime|group|Var05|Var07"))
+group_S04_df = select (group_S04_df, matches("SeriesInd|datetime|group|Var01|Var02"))
+group_S05_df = select (group_S05_df, matches("SeriesInd|datetime|group|Var02|Var03"))
+group_S06_df = select (group_S06_df, matches("SeriesInd|datetime|group|Var05|Var07"))
+# Check number of rows
+print (c(nrow(group_S01_df), nrow(group_S02_df), nrow(group_S03_df), nrow(group_S04_df), nrow(group_S05_df), nrow(group_S06_df)))
+# Verify dataframes
+head(project_in_df, 20)
+head(group_S01_df, 20)
+head(group_S02_df, 20)
+head(group_S03_df, 20)
+head(group_S04_df, 20)
+head(group_S05_df, 20)
+head(group_S06_df, 20)
+```
+
+
+#### <span style="color:red"><b><u>Exploratory Data Analysis</u></b></span>
+
+Lets start looking at the data.
+First we are making line plots for all the groups and variables we will be forecasting.
+
+```{r}
+p1 <- ggplot(group_S01_df, aes(SeriesInd, y = Var02, color = variable)) + 
+      ggtitle("S01") +
+     geom_line(aes(y = Var02, col = "Var02"))
+
+p2 <- ggplot(group_S01_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    ggtitle("S01") + 
+    geom_line(aes(y = Var01, col = "Var01"))
+
+p3 <- ggplot(group_S02_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var02, col = "Var02"))
+
+
+p4 <- ggplot(group_S02_df, aes(SeriesInd, y = Var03,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var03, col = "Var03"))
+
+p5 <- ggplot(group_S03_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S03") 
+
+p6 <- ggplot(group_S03_df, aes(SeriesInd, y = Var07, color = variable)) + 
+    geom_line(aes(y = Var07, col = "Var07")) +
+    ggtitle("S03") 
+  
+p7 <- ggplot(group_S04_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    geom_line(aes(y = Var01, col = "Var01")) + 
+    ggtitle("S04") 
+p8 <- ggplot(group_S04_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S04") + 
+    geom_line(aes(y = Var02, col = "Var02"))
+
+
+p9 <- ggplot(group_S05_df, aes(SeriesInd, y = Var03, color = variable)) + 
+   ggtitle("S05") +
+    geom_line(aes(y = Var03, col = "Var03"))
+
+p10 <- ggplot(group_S05_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S05") + 
+    geom_line(aes(y = Var02, col = "Var02"))
+
+p11 <- ggplot(group_S06_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S06")
+
+p12 <- ggplot(group_S06_df, aes(SeriesInd, y = Var07, color = variable)) + 
+     ggtitle("S06") +
+    geom_line(aes(y = Var07, col = "Var07"))
+grid.arrange(p1, p2, nrow = 1)
+grid.arrange(p3, p4, nrow = 1)
+grid.arrange(p5, p6, nrow = 1)
+grid.arrange(p7,p8, nrow = 1)
+grid.arrange(p9,p10, nrow = 1)
+grid.arrange(p11,p12, nrow = 1)
+```
+
+Comparing to other variable Var02 seems to be noisy than any other variable and having outliers.
+These outliers needs to be fixed before producing forecasts
+S03 and S06 variables Var05 and Var07 seems to be quite similar
+Also we see in S02 - Var03 and S06-Var05 and Var07 plot some outlier values that also needs to be fixed before forecasting.
+We can also observe some seasonality and trend pattern in Var01,Var03,Var05 and var07
+
+
+Removing outliers
+We are using here IQR to fix the outliers in our data
+For missing values that lie outside the 1.5*IQR limits, we are capping it by replacing those observations outside the lower limit with the value of 5th %ile and those that lie above the upper limit, with the value of 95th %ile.
+```{r}
+Remove_Outlier <- function(x){
+   qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
+   caps <- quantile(x, probs=c(.05, .95), na.rm = T)
+   H <- 1.5 * IQR(x, na.rm = T)
+   x[x < (qnt[1] - H)] <- caps[1]
+   x[x > (qnt[2] + H)] <- caps[2]
+   return(x)
+}
+group_S06_df$Var07[which.max(group_S06_df$Var07)] = mean(group_S06_df$Var07, na.rm=TRUE)
+group_S06_df$Var05[which.max(group_S06_df$Var05)] = mean(group_S06_df$Var05, na.rm=TRUE)
+group_S06_df$Var07[which.max(group_S06_df$Var07)] = mean(group_S06_df$Var07, na.rm=TRUE)
+group_S05_df$Var03[which.max(group_S05_df$Var03)] = mean(group_S05_df$Var03, na.rm=TRUE)
+group_S05_df$Var03[which.max(group_S05_df$Var03)] = mean(group_S05_df$Var03, na.rm=TRUE)
+group_S01_df$Var01=Remove_Outlier(group_S01_df$Var01)
+group_S01_df$Var02=Remove_Outlier(group_S01_df$Var02)
+group_S02_df$Var03=Remove_Outlier(group_S02_df$Var03)
+group_S02_df$Var02=Remove_Outlier(group_S02_df$Var02)
+group_S04_df$Var01=Remove_Outlier(group_S04_df$Var01)
+group_S04_df$Var02=Remove_Outlier(group_S04_df$Var02)
+group_S05_df$Var03=Remove_Outlier(group_S05_df$Var03)
+group_S05_df$Var02=Remove_Outlier(group_S05_df$Var02)
+group_S06_df$Var05=Remove_Outlier(group_S06_df$Var05)
+group_S06_df$Var07=Remove_Outlier(group_S06_df$Var07)
+
+```
+
+Lets plot again plots for the variables to check if the outliers are fixed
+
+```{r}
+p1 <- ggplot(group_S01_df, aes(SeriesInd, y = Var02, color = variable)) + 
+      ggtitle("S01") +
+     geom_line(aes(y = Var02, col = "Var02"))
+
+p2 <- ggplot(group_S01_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    ggtitle("S01") + 
+    geom_line(aes(y = Var01, col = "Var01"))
+
+p3 <- ggplot(group_S02_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var02, col = "Var02"))
+
+
+p4 <- ggplot(group_S02_df, aes(SeriesInd, y = Var03,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var03, col = "Var03"))
+
+p5 <- ggplot(group_S03_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S03") 
+
+p6 <- ggplot(group_S03_df, aes(SeriesInd, y = Var07, color = variable)) + 
+    geom_line(aes(y = Var07, col = "Var07")) +
+    ggtitle("S03") 
+  
+p7 <- ggplot(group_S04_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    geom_line(aes(y = Var01, col = "Var01")) + 
+    ggtitle("S04") 
+p8 <- ggplot(group_S04_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S04") + 
+    geom_line(aes(y = Var02, col = "Var02"))
+
+
+p9 <- ggplot(group_S05_df, aes(SeriesInd, y = Var03, color = variable)) + 
+   ggtitle("S05") +
+    geom_line(aes(y = Var03, col = "Var03"))
+
+p10 <- ggplot(group_S05_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S05") + 
+    geom_line(aes(y = Var02, col = "Var02"))
+
+p11 <- ggplot(group_S06_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S06")
+
+p12 <- ggplot(group_S06_df, aes(SeriesInd, y = Var07, color = variable)) + 
+     ggtitle("S06") +
+    geom_line(aes(y = Var07, col = "Var07"))
+grid.arrange(p1, p2, nrow = 1)
+grid.arrange(p3, p4, nrow = 1)
+grid.arrange(p5, p6, nrow = 1)
+grid.arrange(p7,p8, nrow = 1)
+grid.arrange(p9,p10, nrow = 1)
+grid.arrange(p11,p12, nrow = 1)
+```
+
+The plots looks it has removed the extreme outliers.
+
+The plots for Var01,Var03,Var05,Var07 shows increase in general during the period of time. But there is no obvious pattern in the fluctuation. In other words, there is no seasonality, but an obvious upward trend. Also, the variance is not stable seeing from the plots and it seems to increase. Thus, we may use difference and  logarithm or square root transformation on original data to stabilize the variance.
+
+We are using here difference of each value over previous value and difference logarithm transformation for Var02
+
+Lets create plots to have compare how the orignal data and transformed data
+
+```{r,eval=TRUE}
+par(mfrow=c(1,2))
+p1 <- plot(group_S01_df$Var01, type = "l", main = "original dataS01&Var01")
+p2 <- plot(diff(group_S01_df$Var01), type = "l", main = "Diff dataS01&Var01")
+p3 <- plot(group_S01_df$Var02, type = "l", main = "original dataS01&Var02")
+p4 <- plot(diff(log(group_S01_df$Var02)), type = "l", main = "LogdataS01&Var02")
+p5 <- plot(group_S02_df$Var02, type = "l", main = "original dataS02&Var02")
+p6 <- plot(diff(log(group_S02_df$Var02)), type = "l", main = "LogdataS02&Var02")
+p7 <- plot(group_S02_df$Var03, type = "l", main = "originaldataS02&Var03")
+p8 <- plot(diff(group_S02_df$Var03), type = "l", main = "DiffdataS02&Var03")
+p9 <- plot(group_S03_df$Var05, type = "l", main = "original dataS03&Var05")
+p10 <- plot(diff(group_S03_df$Var05), type = "l", main = "Diff dataS03&Var05")
+p11 <- plot(group_S03_df$Var07, type = "l", main = "original dataS03&Var07")
+p12 <- plot(diff(group_S03_df$Var07), type = "l", main = "LogdataS03&Var07")
+p13 <- plot(group_S04_df$Var01, type = "l", main = "original dataS04&Var01")
+p14 <- plot(diff(group_S04_df$Var01), type = "l", main = "Diff dataS04&Var04")
+p15 <- plot(group_S04_df$Var02, type = "l", main = "original dataS04&Var02")
+p16 <- plot(diff(log(group_S04_df$Var02)), type = "l", main = "LogdataS04&Var02")
+p17 <- plot(group_S05_df$Var02, type = "l", main = "original dataS05&Var02")
+p18 <- plot(diff(log(group_S05_df$Var02)), type = "l", main = "Diff dataS05&Var02")
+p19 <- plot(group_S05_df$Var03, type = "l", main = "original dataS05&Var03")
+p20 <- plot(diff(group_S05_df$Var03), type = "l", main = "DiffdataS05&Var03")
+p21 <- plot(group_S06_df$Var05, type = "l", main = "original dataS06&Var05")
+p22 <- plot(diff(group_S06_df$Var05), type = "l", main = "Diff dataS06&Var05")
+p23 <- plot(group_S06_df$Var07, type = "l", main = "original dataS06&Var07")
+p24 <- plot(diff(group_S06_df$Var07), type = "l", main = "DiffdataS06&Var07")
+```
+
+Data looks like it eliminated noise compared to the orginal.
+Data looks more stationary after applying differencing to Var01,Var03,Var05,Var07 and applying logarithm Var02.
+
+
+
+
+#### <span style="color:red"><b><u>Cleanup Dataset</u></b></span>
+
+
+#### <span style="color:red"><b><u>Build Model</u></b></span>
+
+
+#### <span style="color:red"><b><u>Evaluate Model</u></b></span>
+
+
+#### <span style="color:red"><b><u>Group S01 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S02 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S03 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S04 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S05 Forecast</u></b></span>
+#### <span style="color:red"><b><u>Group S06 Forecast</u></b></span>
