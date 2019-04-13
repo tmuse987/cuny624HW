@@ -287,7 +287,7 @@ grid.arrange(p11,p12, nrow = 1)
 
 The plots looks it has removed the extreme outliers.
 
-The plots for Var01,Var03,Var05,Var07 shows increase in general during the period of time. But there is no obvious pattern in the fluctuation. In other words, there is no seasonality, but an obvious upward trend. Also, the variance is not stable seeing from the plots and it seems to increase. Thus, we may use difference and  logarithm or square root transformation on original data to stabilize the variance.
+The plots for Var01,Var03,Var05,Var07 shows increase in general during the period of time. But there is no obvious pattern in the fluctuation. In other words, there might be some seasonality, but an obvious upward trend. Also, the variance is not stable seeing from the plots and it seems to increase. Thus, we may use difference and  logarithm or square root transformation on original data to stabilize the variance.
 
 We are using here difference of each value over previous value and difference logarithm transformation for Var02
 
