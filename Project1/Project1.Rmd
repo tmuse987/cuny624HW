@@ -239,6 +239,128 @@ sarima(TsVar02, 4, 1, 4)
 sarima.for(TsVar02, 140, 4, 1,4)
 ```
 
+###Model the other variables for the other stocks
+####S01 Var01, var02
+```{r}
+TsVar01 <- ts(group_S01_df$Var01, frequency = 5*52)
+arimaFitVar01 <- auto.arima(TsVar01, seasonal = FALSE)
+arimaFitVar01
+TsVar02 <- ts(group_S01_df$Var02, frequency = 5*52)
+arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
+arimaFitVar02
+```
+
+```{r}
+sarima(TsVar01, 0, 1, 2)
+
+fSarima <- sarima.for(TsVar01[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+#save prediction into df
+group_S01_df[1623:1762,2] <- fSarima$pred
+
+sarima(TsVar01, 1, 1, 3)
+fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+group_S01_df[1623:1762,3] <- fSarima$pred
+```
+
+####S02 Var02, var03
+```{r}
+TsVar02 <- ts(group_S02_df$Var02, frequency = 5*52)
+arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
+arimaFitVar02
+TsVar03 <- ts(group_S02_df$Var03, frequency = 5*52)
+arimaFitVar03 <- auto.arima(TsVar03, seasonal = FALSE)
+arimaFitVar03
+```
+
+```{r}
+sarima(TsVar02, 2, 1, 3)
+
+fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+#save prediction into df
+group_S02_df[1623:1762,2] <- fSarima$pred
+
+sarima(TsVar03, 0, 1, 1)
+fSarima <- sarima.for(TsVar03[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+group_S02_df[1623:1762,3] <- fSarima$pred
+```
+
+
+####S03 Var05, var07
+```{r}
+TsVar05 <- ts(group_S03_df$Var05, frequency = 5*52)
+arimaFitVar05 <- auto.arima(TsVar05, seasonal = FALSE)
+arimaFitVar05
+TsVar07 <- ts(group_S03_df$Var07, frequency = 5*52)
+arimaFitVar07 <- auto.arima(TsVar07, seasonal = FALSE)
+arimaFitVar07
+```
+
+```{r}
+sarima(TsVar05, 1, 1, 0)
+
+fSarima <- sarima.for(TsVar05[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+#save prediction into df
+group_S03_df[1623:1762,2] <- fSarima$pred
+
+sarima(TsVar07, 0, 1, 0)
+fSarima <- sarima.for(TsVar07[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+group_S03_df[1623:1762,3] <- fSarima$pred
+```
+
+####S04 Var01, var02
+```{r}
+TsVar01 <- ts(group_S04_df$Var01, frequency = 5*52)
+arimaFitVar01 <- auto.arima(TsVar01, seasonal = FALSE)
+arimaFitVar01
+TsVar02 <- ts(group_S04_df$Var02, frequency = 5*52)
+arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
+arimaFitVar02
+```
+
+```{r}
+sarima(TsVar01, 0, 1, 0)
+
+fSarima <- sarima.for(TsVar01[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+#save prediction into df
+group_S04_df[1623:1762,2] <- fSarima$pred
+
+sarima(TsVar02, 2, 1, 3)
+fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+group_S04_df[1623:1762,3] <- fSarima$pred
+```
+
+
+####S06 Var05, var07
+```{r}
+TsVar05 <- ts(group_S06_df$Var05, frequency = 5*52)
+arimaFitVar05 <- auto.arima(TsVar05, seasonal = FALSE)
+arimaFitVar05
+TsVar07 <- ts(group_S06_df$Var07, frequency = 5*52)
+arimaFitVar07 <- auto.arima(TsVar07, seasonal = FALSE)
+arimaFitVar07
+```
+
+```{r}
+sarima(TsVar05, 0, 1, 1)
+
+fSarima <- sarima.for(TsVar05[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+#save prediction into df
+group_S06_df[1623:1762,2] <- fSarima$pred
+
+sarima(TsVar07, 0, 1, 1)
+fSarima <- sarima.for(TsVar07[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima$pred[1:20]
+group_S06_df[1623:1762,3] <- fSarima$pred
+```
 
 #### <span style="color:red"><b><u>Group S06 Forecast</u></b></span>
 
