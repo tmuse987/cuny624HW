@@ -218,12 +218,18 @@ We are using here IQR to fix the outliers in our data
 For missing values that lie outside the 1.5*IQR limits, we are capping it by replacing those observations outside the lower limit with the value of 5th %ile and those that lie above the upper limit, with the value of 95th %ile.
 ```{r}
 Remove_Outlier <- function(x){
+    repeat{
    qnt <- quantile(x, probs=c(.25, .75), na.rm = T)
    caps <- quantile(x, probs=c(.05, .95), na.rm = T)
    H <- 1.5 * IQR(x, na.rm = T)
    x[x < (qnt[1] - H)] <- caps[1]
    x[x > (qnt[2] + H)] <- caps[2]
+  
    return(x)
+   if(x < (qnt[1] - H)){break}
+   if(x > (qnt[1] + H)){break}
+    }
+   
 }
 group_S01_df$Var01=Remove_Outlier(group_S01_df$Var01)
 group_S01_df$Var02=Remove_Outlier(group_S01_df$Var02)
@@ -235,11 +241,6 @@ group_S05_df$Var03=Remove_Outlier(group_S05_df$Var03)
 group_S05_df$Var02=Remove_Outlier(group_S05_df$Var02)
 group_S06_df$Var05=Remove_Outlier(group_S06_df$Var05)
 group_S06_df$Var07=Remove_Outlier(group_S06_df$Var07)
-group_S06_df$Var07[which.max(group_S06_df$Var07)] = mean(group_S06_df$Var07, na.rm=TRUE)
-group_S06_df$Var05[which.max(group_S06_df$Var05)] = mean(group_S06_df$Var05, na.rm=TRUE)
-group_S06_df$Var07[which.max(group_S06_df$Var07)] = mean(group_S06_df$Var07, na.rm=TRUE)
-group_S05_df$Var03[which.max(group_S05_df$Var03)] = mean(group_S05_df$Var03, na.rm=TRUE)
-group_S05_df$Var03[which.max(group_S05_df$Var03)] = mean(group_S05_df$Var03, na.rm=TRUE)
 
 ```
 
