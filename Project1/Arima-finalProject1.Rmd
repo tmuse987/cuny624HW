@@ -164,54 +164,42 @@ Lets start looking at the data.
 First we are making line plots for all the groups and variables we will be forecasting.
 
 ```{r}
-p1 <- ggplot(group_S01_df, aes(SeriesInd, y = Var02, color = variable)) + 
-      ggtitle("S01") +
-     geom_line(aes(y = Var02, col = "Var02"))
+SeriesInd1 <- as.Date(group_S01_df$SeriesInd,origin = "1899-12-30")
+SeriesInd2 <- as.Date(group_S02_df$SeriesInd,origin = "1899-12-30")
+SeriesInd3 <- as.Date(group_S03_df$SeriesInd,origin = "1899-12-30")
+SeriesInd4 <- as.Date(group_S04_df$SeriesInd,origin = "1899-12-30")
+SeriesInd5 <- as.Date(group_S05_df$SeriesInd,origin = "1899-12-30")
+SeriesInd6 <- as.Date(group_S06_df$SeriesInd,origin = "1899-12-30")
+p1 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var02, color = variable)) + ggtitle("S01") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p2 <- ggplot(group_S01_df, aes(SeriesInd, y = Var01, color = variable)) + 
-    ggtitle("S01") + 
-    geom_line(aes(y = Var01, col = "Var01"))
+p2 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var01, color = variable)) + ggtitle("S01") + geom_line(aes(y = Var01, col = "Var01")) + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p3 <- ggplot(group_S02_df, aes(SeriesInd, y = Var02,color = variable))+
-    ggtitle("S02") + 
-    geom_line(aes(y = Var02, col = "Var02"))
+p3 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var02,color = variable))+ ggtitle("S02") + geom_line(aes(y = Var02, col = "Var02"))  +xlab("Time")+ theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-p4 <- ggplot(group_S02_df, aes(SeriesInd, y = Var03,color = variable))+
-    ggtitle("S02") + 
-    geom_line(aes(y = Var03, col = "Var03"))
+p4 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var03,color = variable))+ ggtitle("S02") +  geom_line(aes(y = Var03, col = "Var03")) +xlab("Time")+ theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p5 <- ggplot(group_S03_df, aes(SeriesInd, y = Var05, color = variable)) + 
-    geom_line(aes(y = Var05, col = "Var05")) +
-    ggtitle("S03") 
+p5 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) + ggtitle("S03")+ xlab("Time") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p6 <- ggplot(group_S03_df, aes(SeriesInd, y = Var07, color = variable)) + 
-    geom_line(aes(y = Var07, col = "Var07")) +
-    ggtitle("S03") 
+p6 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var07, color = variable)) +  geom_line(aes(y = Var07, col = "Var07")) + ggtitle("S03")  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
-p7 <- ggplot(group_S04_df, aes(SeriesInd, y = Var01, color = variable)) + 
-    geom_line(aes(y = Var01, col = "Var01")) + 
-    ggtitle("S04") 
-p8 <- ggplot(group_S04_df, aes(SeriesInd, y = Var02,color = variable))+
-    ggtitle("S04") + 
-    geom_line(aes(y = Var02, col = "Var02"))
+p7 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var01, color = variable)) + geom_line(aes(y = Var01, col = "Var01")) + ggtitle("S04")  +xlab("Time")+ theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+p8 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var02,color = variable))+ ggtitle("S04") + geom_line(aes(y = Var02, col = "Var02"))  +xlab("Time")+ theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-p9 <- ggplot(group_S05_df, aes(SeriesInd, y = Var03, color = variable)) + 
-   ggtitle("S05") +
-    geom_line(aes(y = Var03, col = "Var03"))
+p9 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var03, color = variable)) + ggtitle("S05") +geom_line(aes(y = Var03, col = "Var03"))  + xlab("Time")+theme_bw()+
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p10 <- ggplot(group_S05_df, aes(SeriesInd, y = Var02,color = variable))+
-    ggtitle("S05") + 
-    geom_line(aes(y = Var02, col = "Var02"))
+p10 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var02,color = variable))+ ggtitle("S05") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p11 <- ggplot(group_S06_df, aes(SeriesInd, y = Var05, color = variable)) + 
-    geom_line(aes(y = Var05, col = "Var05")) +
-    ggtitle("S06")
+p11 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) +
+ggtitle("S06")  +xlab("Time")+ theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p12 <- ggplot(group_S06_df, aes(SeriesInd, y = Var07, color = variable)) + 
-     ggtitle("S06") +
-    geom_line(aes(y = Var07, col = "Var07"))
+p12 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var07, color = variable)) + ggtitle("S06") + geom_line(aes(y = Var07, col = "Var07"))  + xlab("Time")+theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 grid.arrange(p1, p2, nrow = 1)
 grid.arrange(p3, p4, nrow = 1)
 grid.arrange(p5, p6, nrow = 1)
@@ -261,54 +249,43 @@ group_S06_df$Var07=Remove_Outlier(group_S06_df$Var07)
 Lets plot again plots for the variables to check if the outliers are fixed
 
 ```{r}
-p1 <- ggplot(group_S01_df, aes(SeriesInd, y = Var02, color = variable)) + 
-      ggtitle("S01") +
-     geom_line(aes(y = Var02, col = "Var02"))
+p1 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var02, color = variable)) + ggtitle("S01") + geom_line(aes(y = Var02, col = "Var02")) + xlab("Time")+theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p2 <- ggplot(group_S01_df, aes(SeriesInd, y = Var01, color = variable)) + 
-    ggtitle("S01") + 
-    geom_line(aes(y = Var01, col = "Var01"))
+p2 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var01, color = variable)) +  ggtitle("S01") + geom_line(aes(y = Var01, col = "Var01"))  +xlab("Time")+ theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p3 <- ggplot(group_S02_df, aes(SeriesInd, y = Var02,color = variable))+
-    ggtitle("S02") + 
-    geom_line(aes(y = Var02, col = "Var02"))
+p3 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var02,color = variable))+ ggtitle("S02") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-p4 <- ggplot(group_S02_df, aes(SeriesInd, y = Var03,color = variable))+
-    ggtitle("S02") + 
-    geom_line(aes(y = Var03, col = "Var03"))
+p4 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var03,color = variable))+ ggtitle("S02") + geom_line(aes(y = Var03, col = "Var03"))  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p5 <- ggplot(group_S03_df, aes(SeriesInd, y = Var05, color = variable)) + 
-    geom_line(aes(y = Var05, col = "Var05")) +
-    ggtitle("S03") 
+p5 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) +
+ggtitle("S03")  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p6 <- ggplot(group_S03_df, aes(SeriesInd, y = Var07, color = variable)) + 
-    geom_line(aes(y = Var07, col = "Var07")) +
-    ggtitle("S03") 
+p6 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var07, color = variable)) + geom_line(aes(y = Var07, col = "Var07")) +
+ggtitle("S03")  + xlab("Time")+theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
-p7 <- ggplot(group_S04_df, aes(SeriesInd, y = Var01, color = variable)) + 
-    geom_line(aes(y = Var01, col = "Var01")) + 
-    ggtitle("S04") 
-p8 <- ggplot(group_S04_df, aes(SeriesInd, y = Var02,color = variable))+
-    ggtitle("S04") + 
-    geom_line(aes(y = Var02, col = "Var02"))
+p7 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var01, color = variable)) +  geom_line(aes(y = Var01, col = "Var01")) + 
+    ggtitle("S04")  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p8 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var02,color = variable))+ ggtitle("S04") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 
-p9 <- ggplot(group_S05_df, aes(SeriesInd, y = Var03, color = variable)) + 
-   ggtitle("S05") +
-    geom_line(aes(y = Var03, col = "Var03"))
+p9 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var03, color = variable)) + ggtitle("S05") + geom_line(aes(y = Var03, col = "Var03"))  + xlab("Time")+theme_bw()+
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p10 <- ggplot(group_S05_df, aes(SeriesInd, y = Var02,color = variable))+
-    ggtitle("S05") + 
-    geom_line(aes(y = Var02, col = "Var02"))
+p10 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var02,color = variable))+ ggtitle("S05") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p11 <- ggplot(group_S06_df, aes(SeriesInd, y = Var05, color = variable)) + 
-    geom_line(aes(y = Var05, col = "Var05")) +
-    ggtitle("S06")
+p11 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) +
+ggtitle("S06")  + xlab("Time")+theme_bw()+
+theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-p12 <- ggplot(group_S06_df, aes(SeriesInd, y = Var07, color = variable)) + 
-     ggtitle("S06") +
-    geom_line(aes(y = Var07, col = "Var07"))
+p12 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var07, color = variable)) + ggtitle("S06") + geom_line(aes(y = Var07, col = "Var07"))  + xlab("Time")+theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 grid.arrange(p1, p2, nrow = 1)
 grid.arrange(p3, p4, nrow = 1)
 grid.arrange(p5, p6, nrow = 1)
