@@ -344,7 +344,7 @@ p24 <- plot(diff(group_S06_df$Var07), type = "l", main = "DiffdataS06&Var07")
 ```
 
 Data looks like it eliminated noise compared to the orginal.
-Data looks more stationary after applying differencing to Var01,Var03,Var05,Var07 and applying logarithm Var02.
+Data looks more stationary after applying differencing to Var01,Var02,Var03,Var05,Var07.
 
 #### <span style="color:red"><b><u>Group S01 Forecast</u></b></span>
 #### <span style="color:red"><b><u>Group S02 Forecast</u></b></span>
