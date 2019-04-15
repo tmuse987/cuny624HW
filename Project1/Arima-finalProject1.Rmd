@@ -67,6 +67,18 @@ group_S04_df = filter(project_in_df, group == 'S04')
 group_S05_df = filter(project_in_df, group == 'S05')
 group_S06_df = filter(project_in_df, group == 'S06')
 
+# Var01 - High of the day
+# Var02 - Volume
+# Var03 - Low of the day
+# Var05 - Open for the day
+# Var07 - Close for the day
+
+ggplot(group_S01_df, aes(datetime, Var07)) + geom_line(colour="#000099") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
+ggplot(group_S02_df, aes(datetime, Var07)) + geom_line(colour="#990000") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
+ggplot(group_S03_df, aes(datetime, Var07)) + geom_line(colour="#009900") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
+ggplot(group_S04_df, aes(datetime, Var07)) + geom_line(colour="#990099") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
+ggplot(group_S05_df, aes(datetime, Var07)) + geom_line(colour="#999900") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
+ggplot(group_S06_df, aes(datetime, Var07)) + geom_line(colour="#009999") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
 
 #remove forecast cells for now
 #project_in_df <- project_in_df[1:9732,]
