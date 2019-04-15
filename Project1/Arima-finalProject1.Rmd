@@ -46,6 +46,7 @@ library(ggcorrplot)
 library(astsa)
 library(janitor)
 library(timeDate)
+library(scales)
 ```
 #### <span style="color:red"><b><u>Exploratory Data Analysis and Data Cleaning </u></b></span>
 
