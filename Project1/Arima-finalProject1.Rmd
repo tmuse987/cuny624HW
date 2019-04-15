@@ -68,6 +68,8 @@ group_S04_df = filter(project_in_df, group == 'S04')
 group_S05_df = filter(project_in_df, group == 'S05')
 group_S06_df = filter(project_in_df, group == 'S06')
 
+Looking at the data we found that the data is financial stock market data from 6 different companies.
+The Variables represent the following
 # Var01 - High of the day
 # Var02 - Volume
 # Var03 - Low of the day
