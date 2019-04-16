@@ -67,6 +67,7 @@ group_S03_df = filter(project_in_df, group == 'S03')
 group_S04_df = filter(project_in_df, group == 'S04')
 group_S05_df = filter(project_in_df, group == 'S05')
 group_S06_df = filter(project_in_df, group == 'S06')
+```
 
 Looking at the data we found that the data is financial stock market data from 6 different companies.
 The Variables represent the following
@@ -75,7 +76,7 @@ The Variables represent the following
 # Var03 - Low of the day
 # Var05 - Open for the day
 # Var07 - Close for the day
-
+```{r}
 ggplot(group_S01_df, aes(datetime, Var07)) + geom_line(colour="#000099") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
 ggplot(group_S02_df, aes(datetime, Var07)) + geom_line(colour="#990000") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
 ggplot(group_S03_df, aes(datetime, Var07)) + geom_line(colour="#009900") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
@@ -383,7 +384,7 @@ Looking at the residuals from the package output, we see that they look like whi
 
 Note the box test results show that there may still be correlation on the residuals as the 
 ```{r}
-sarima(TsVar02, 1, 1, 3)
+#sarima(TsVar02, 1, 1, 3)
 
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
@@ -443,9 +444,9 @@ print("Checking for seasonality:")
 nsdiffs(TsVar02, test = "seas")
 nsdiffs(TsVar03, test = "seas")
 ```
-Checking ACF grapsh for the p and q values.
+Checking ACF graphs for the p and q values.
 
-```{r}
+```{r echo = FALSE}
 #113
 Acf(diff(TsVar02))
 pacf(diff(TsVar02))
@@ -455,14 +456,14 @@ pacf(diff(TsVar03))
 Looking at the plots is seems like a (1,1,4) model might be better for Var02 considering the number of spikes in the acf graph.  Rerunning using that model, the box test results look better, althought the AIC numbers are virtually unchanged.
 
 The 2,1,1 based on the acf graphs looks reasonable for Var03.
-```{r}
-sarima(TsVar02, 4, 1, 4)
+```{r echo = FALSE}
+#sarima(TsVar02, 4, 1, 4)
 sarima.for(TsVar02, 140, 4, 1,4,plot.all = TRUE)
 ```
 
 ###Model the other variables for the other stocks
 ####S01 Var01, var02
-```{r}
+```{r echo = FALSE}
 TsVar01 <- ts(group_S01_df$Var01, frequency = 5*52)
 arimaFitVar01 <- auto.arima(TsVar01, seasonal = FALSE)
 arimaFitVar01
@@ -471,22 +472,22 @@ arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
 arimaFitVar02
 ```
 
-```{r}
-sarima(TsVar01, 0, 1, 2)
+```{r echo = FALSE}
+#sarima(TsVar01, 0, 1, 2)
 
 fSarima <- sarima.for(TsVar01[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S01_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar01, 1, 1, 3)
+#sarima(TsVar01, 1, 1, 3)
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S01_df[1623:1762,3] <- fSarima$pred
 ```
 
 ####S02 Var02, var03
-```{r}
+```{r echo = FALSE}
 TsVar02 <- ts(group_S02_df$Var02, frequency = 5*52)
 arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
 arimaFitVar02
@@ -495,15 +496,15 @@ arimaFitVar03 <- auto.arima(TsVar03, seasonal = FALSE)
 arimaFitVar03
 ```
 
-```{r}
-sarima(TsVar02, 2, 1, 3)
+```{r echo = FALSE}
+#sarima(TsVar02, 2, 1, 3)
 
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S02_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar03, 0, 1, 1)
+#sarima(TsVar03, 0, 1, 1)
 fSarima <- sarima.for(TsVar03[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S02_df[1623:1762,3] <- fSarima$pred
@@ -511,7 +512,7 @@ group_S02_df[1623:1762,3] <- fSarima$pred
 
 
 ####S03 Var05, var07
-```{r}
+```{r echo = FALSE}
 TsVar05 <- ts(group_S03_df$Var05, frequency = 5*52)
 arimaFitVar05 <- auto.arima(TsVar05, seasonal = FALSE)
 arimaFitVar05
@@ -520,22 +521,22 @@ arimaFitVar07 <- auto.arima(TsVar07, seasonal = FALSE)
 arimaFitVar07
 ```
 
-```{r}
-sarima(TsVar05, 1, 1, 0)
+```{r echo = FALSE}
+#sarima(TsVar05, 1, 1, 0)
 
 fSarima <- sarima.for(TsVar05[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S03_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar07, 0, 1, 0)
+#sarima(TsVar07, 0, 1, 0)
 fSarima <- sarima.for(TsVar07[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S03_df[1623:1762,3] <- fSarima$pred
 ```
 
 ####S04 Var01, var02
-```{r}
+```{r echo = FALSE}
 TsVar01 <- ts(group_S04_df$Var01, frequency = 5*52)
 arimaFitVar01 <- auto.arima(TsVar01, seasonal = FALSE)
 arimaFitVar01
@@ -544,7 +545,7 @@ arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
 arimaFitVar02
 ```
 
-```{r}
+```{r echo = FALSE}
 sarima(TsVar01, 0, 1, 0)
 
 fSarima <- sarima.for(TsVar01[1:1622], 140, 1, 1, 3, plot.all = TRUE)
@@ -552,7 +553,7 @@ fSarima$pred[1:20]
 #save prediction into df
 group_S04_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar02, 2, 1, 3)
+#sarima(TsVar02, 2, 1, 3)
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S04_df[1623:1762,3] <- fSarima$pred
@@ -560,7 +561,7 @@ group_S04_df[1623:1762,3] <- fSarima$pred
 
 
 ####S06 Var05, var07
-```{r}
+```{r echo = FALSE}
 TsVar05 <- ts(group_S06_df$Var05, frequency = 5*52)
 arimaFitVar05 <- auto.arima(TsVar05, seasonal = FALSE)
 arimaFitVar05
@@ -569,15 +570,15 @@ arimaFitVar07 <- auto.arima(TsVar07, seasonal = FALSE)
 arimaFitVar07
 ```
 
-```{r}
-sarima(TsVar05, 0, 1, 1)
+```{r echo = FALSE}
+#sarima(TsVar05, 0, 1, 1)
 
 fSarima <- sarima.for(TsVar05[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S06_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar07, 0, 1, 1)
+#sarima(TsVar07, 0, 1, 1)
 fSarima <- sarima.for(TsVar07[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S06_df[1623:1762,3] <- fSarima$pred
@@ -585,7 +586,7 @@ group_S06_df[1623:1762,3] <- fSarima$pred
 
 #### <span style="color:red"><b><u>Group S06 Forecast</u></b></span>
 
-```{r}
+```{r echo = FALSE}
 #put the sequence numbers back in
 seqNumbers <- distinct(as.data.frame(project_in_df[,1]))
 group_S01_df[,1] = seqNumbers
@@ -598,7 +599,7 @@ group_S06_df[,1] = seqNumbers
 ```
 
 #### <span style="color:red"><b><u>Export Results</u></b></span>
-```{r}
+```{r echo = FALSE}
 write.xlsx(project_in_df, file = "output.xls", sheetName = "Set for Class", row.names=FALSE, append = FALSE)
 write.xlsx(group_S01_df, file = "output.xls", sheetName = "S01", row.names=FALSE, append = TRUE)
 write.xlsx(group_S02_df, file = "output.xls", sheetName = "S02", row.names=FALSE, append = TRUE)
