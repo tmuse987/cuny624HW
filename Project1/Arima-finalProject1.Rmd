@@ -3,9 +3,9 @@ title: 'DATA 624 Spring 2019: Project-1'
 author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
 date: "March 19, 2019"
 output:
-  word_document: default
-  html_document: default
   pdf_document: default
+  html_document: default
+  word_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -18,8 +18,14 @@ options(width = 3000)
 
 
 #### Introduction
-Data given is a de-identified Excel spreadsheet. Assignment is to perform the appropriate analysis to forecast several series for 140 periods.We are having 1622 periods for our analysis.We need to create model and forecast values for the following series.
 
+The innate desire to predict the future stems from the multitude of advantages it delivers.  Depending on the quality and processing of the data, the goal can be as easy as predicting a full moon three years from today to as hard as predicting the weather a week from now.  The different Machine Learning (ML) techniques that will be described may unveil great insight into how the data can be forecasted or at all.  This project shows the process of finding and analyzing what patterns time-series data can hold and the algorithms that discover them.
+
+	The purpose of this project is to forecast a dataset 140 days in the future.  Using the R programming language and many of its packages at our disposal, we methodically worked through understanding the data structure and the problems it held.  The dataset we were using had six different groups of stocks.  Each group had seven columns that each represented a different value of a stock price: Open Price, Volume, Low of the day, High of the Day and Close Price.  There are 1,622 rows for each group that represent a time period from May of 2011 to October of 2017. 
+	
+	To begin building a model to forecast the future prices, a solid foundation to work from will need to be created.  Any data that is missing, unnormal or incorrectly formatted will have to be addressed before it can be used reliably.  The process of gathering the data, cleaning it and correcting any errors is described below.
+
+Values to be forecasted for the following series:
 S01 – Forecast  Var01, Var02
 S02 – Forecast  Var02, Var03
 S03 – Forecast  Var05, Var07
@@ -394,7 +400,7 @@ group_S05_df[1623:1762,2] <- fSarima$pred
 
 ```
 
-###ARIMA Fit for Var03
+### ARIMA Fit for Var03
 Doing the same process for Var03, we see that a 2,1,1 model is best.  Again as before the box test results look good as do the ACF of the residuals.
 
 ```{r}
@@ -417,14 +423,14 @@ fSarima$pred[1:20]
 group_S05_df[1623:1762,3] <- fSarima$pred
 ```
 
-###Attempted a box cox transform to see how that worked out, really other than scale is pretty similar.
+### Attempted a box cox transform to see how that worked out, really other than scale is pretty similar.
 ```{r}
 bcTsVar02 <- BoxCox(TsVar02, lambda = "auto")
 fSarima <- sarima.for(bcTsVar02, 140, 1, 1, 3, plot.all = TRUE)
 
 ```
 
-####Sanity checks for differencing.  Run some difference tests, we see that one difference is absolutely needed, and perhaps two differences could be warranted for var03 as one order of difference gives .07 value for the test statistic (i.e.it is greater than .05), but it is questionable, as extra differencing in itself can lead to errors.
+#### Sanity checks for differencing.  Run some difference tests, we see that one difference is absolutely needed, and perhaps two differences could be warranted for var03 as one order of difference gives .07 value for the test statistic (i.e.it is greater than .05), but it is questionable, as extra differencing in itself can lead to errors.
 
 ```{r}
 #Reset values
@@ -618,3 +624,18 @@ write.xlsx(group_S05_df, file = "output.xls", sheetName = "S05", row.names=FALSE
 write.xlsx(group_S06_df, file = "output.xls", sheetName = "S06", row.names=FALSE, append = TRUE)
 
 ```
+
+### Deep Learning
+
+  A promising and more complicated technique involves a process called deep learning.  Deep learning can provide very accurate results at the cost of computer processing power.  To build and train a model can take hours or days compared to other ML techniques.  A deep learning model popular for time series is called Long Short-Term Memory (LSTM).  Like ARIMA, this process requires data transformation to give the model the best chance at accurate forecast predictions and involves the constant tinkering of model parameters such as batch sizes, number of iterations, a loss function, optimizing function and other options. Each change of the model will need to be retrained.  
+
+  Our attempt didn’t provide desirable results.  The errors we calculated such as the RSME were high so model couldn’t be trusted to provide a best fit to the data.  To simplify the model, the daily high and low price were averaged so the model only had to forecast one variable.
+
+![Caption for the picture.](predict.png)
+
+### Conclusion
+
+  Each variable from each series in the dataset provides its own challenges. There isn't a one-solution-fits-all for every time-series dataset though ARIMA may come close.  It can eliminate residual autocorrelation or white noise, and it can take into account long-term trends and seasonality. It can auto-adjust and vary its p, d, and q parameters to build the best model. 
+  
+  Of course, many forecasting models will never be perfect. But the progressive to improve them may lead to the discovery of other characteristics from the data that you would have not seen otherwise. The goal to turn the random into predictable is exhausting but we have found the ARIMA model to be a proven starting point for any forecasting model. 
+
