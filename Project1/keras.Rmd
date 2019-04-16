@@ -1,0 +1,612 @@
+---
+title: "keras"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, results='hide', warning=FALSE, include=FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(rsample)
+library(recipes)
+library(timetk)
+library(tibbletime)
+library(tibble)
+library(tidyverse)
+library(tseries)
+library(Metrics)
+
+#Run the following lines ONCE then comment out
+#This will restart R in a new environment with Python backend.
+
+#devtools::install_github("rstudio/keras")
+library(keras)
+#install_keras()
+```
+
+```{r}
+data <- read.csv('https://raw.githubusercontent.com/smithchad17/624/master/Project1data.csv', stringsAsFactors = F)
+```
+
+```{r}
+#head(data)
+dfTs <- dplyr::filter(data, group == "S02")
+
+fore <- slice(dfTs, 1623:1762)
+dfTs <- slice(dfTs, 1:1622) #remove forecast cells for now
+
+#data cleanup--five rows with na's
+dfTs[rowSums(is.na(dfTs))>0,]
+#mutate them from next value
+while(nrow(dfTs[rowSums(is.na(dfTs))>0,]) > 0)
+{           
+    dfTs <- transmute(dfTs, 
+                            SeriesInd = SeriesInd,
+                            Var01 = if_else(is.na(Var01), lead(Var01), Var01),
+                            Var02 = if_else(is.na(Var02), lead(Var02), Var02),
+                            Var03 = if_else(is.na(Var03), lead(Var03), Var03),
+                            Var05 = if_else(is.na(Var05), lead(Var05), Var05),
+                            Var07 = if_else(is.na(Var07), lead(Var07), Var07))
+    print(dfTs[rowSums(is.na(dfTs))>0,])
+}
+
+#OUTLIERS
+#Find the lower/upper quartile (unname the value which the function gives) and
+#subtract/add 1.5*IQR value for each column
+
+v1_low <- unname(quantile(dfTs$Var01)[2]) - (IQR(dfTs$Var01)*1.5)
+v1_high <- unname(quantile(dfTs$Var01)[4]) + (IQR(dfTs$Var01)*1.5)
+
+v2_low <- unname(quantile(dfTs$Var02)[2]) - (IQR(dfTs$Var02)*1.5)
+v2_high <- unname(quantile(dfTs$Var02)[4]) + (IQR(dfTs$Var02)*1.5)
+
+v3_low <- unname(quantile(dfTs$Var03)[2]) - (IQR(dfTs$Var03)*1.5)
+v3_high <- unname(quantile(dfTs$Var03)[4]) + (IQR(dfTs$Var03)*1.5)
+
+v5_low <- unname(quantile(dfTs$Var05)[2]) - (IQR(dfTs$Var05)*1.5)
+v5_high <- unname(quantile(dfTs$Var05)[4]) + (IQR(dfTs$Var05)*1.5)
+
+v7_low <- unname(quantile(dfTs$Var07)[2]) - (IQR(dfTs$Var07)*1.5)
+v7_high <- unname(quantile(dfTs$Var07)[4]) + (IQR(dfTs$Var07)*1.5)
+
+#Loop through each row, column by column, and if an outlier is found
+#replace the outlier with the average value from the row before and after it.
+
+i <- 1
+
+while(i <= nrow(dfTs)){
+  if(dfTs$Var01[i] < v1_low || dfTs$Var01[i] > v1_high){
+    x <- (dfTs$Var01[i-1]+dfTs$Var01[i+1])/2
+    dfTs$Var01[i] <- x
+  }
+  if(dfTs$Var02[i] < v2_low || dfTs$Var02[i] > v2_high){
+    x <- (dfTs$Var02[i-1]+dfTs$Var02[i+1])/2
+    if(x < 0){
+      x <- 0
+    }
+    dfTs$Var02[i] <- x
+  }
+  if(dfTs$Var03[i] < v3_low || dfTs$Var03[i] > v3_high){
+    x <- (dfTs$Var03[i-1]+dfTs$Var03[i+1])/2
+    dfTs$Var03[i] <- x
+  }
+  if(dfTs$Var05[i] < v5_low || dfTs$Var05[i] > v5_high){
+    x <- (dfTs$Var05[i-1]+dfTs$Var05[i+1])/2
+    dfTs$Var05[i] <- x
+  }
+  if(dfTs$Var07[i] < v7_low || dfTs$Var07[i] > v7_high){
+    x <- (dfTs$Var07[i-1]+dfTs$Var07[i+1])/2
+    dfTs$Var07[i] <- x
+  }
+  i <- i + 1
+}
+
+#Set 'SeriesInd' column as Date format
+#Create an 'avg' column from the open and close columns
+dfTs$SeriesInd <- as.Date(dfTs$SeriesInd, origin = "1899-12-30")
+dfTs <- dfTs %>% 
+  mutate(avg = (Var01+Var07)/2)
+```
+
+```{r}
+#Change from wide to long format
+#Remove volume column for easier graphing
+dfTs_long <- dfTs %>% select(-c(Var02)) %>% 
+  gather(vars, value, Var01:Var07)
+
+
+ggplot(dfTs, aes(x = SeriesInd, y = avg)) +
+  ggtitle("Avg high/low price") +
+  geom_line()
+```
+
+The goal for forecasting this data is to build a neural network from the Keras package. Keras is a deep-learning library built upon a backend such as TensorFlow, which is an open-source machine learning library built on Python. We will use a popular method called Long Short-Term Memory (LSTM). This method is based upon a network called the Recurrent Neural Network (RNN). RNNs are valuable for problems such as time series and text prediction because it learns from the previous steps. RNNs fall short since they loop over and over again and change the model weights due to the accumulation of error gradients from every update.  This can make the model unstable. LSTMs have a step in the algorithm that can ignore insignificant updates in the loops.
+
+To help the LSTM model predict accurate results, the time series data must be stationary without trends or change in the mean or variance.
+
+```{r}
+#ACF
+#ACF test shows that it doesn't autocorrelate and is not stationary
+acf(dfTs$avg, lag.max = 1621)
+```
+```{r}
+#Finding the difference in lags gives it a stationary look
+acf(diff(dfTs$avg, 1))
+```
+
+```{r}
+#DICKY-FULLER
+#DF test shows a high p-value which means there is a trend line
+adf.test(dfTs$avg)
+```
+
+```{r}
+#The change in difference in lags gives a low p-value verifying there is no trend.
+adf.test(diff(dfTs$avg, 1))
+```
+
+```{r}
+#Save lag diff data to use in model
+#First row was removed since the diff data begins at the second lag.
+diffDF <- data.frame(SeriesInd=dfTs[2:1622,1],
+                 # Var01=diff(dfTs$Var01,1),
+                 # Var02=diff(dfTs$Var02,1),
+                 # Var03=diff(dfTs$Var03,1),
+                 # Var05=diff(dfTs$Var05,1),
+                 # Var07=diff(dfTs$Var07,1),
+                 avg=diff(dfTs$avg,1))
+
+#head(diffDF)
+
+#Create dataset without diff transformation
+slim <- subset(dfTs, select=c(SeriesInd, avg))
+```
+
+Backtesting
+
+Takes a time series and splits it into multiple uninterupted sequences each with a training and testing sample. A 'skip' variable can be set to jump the initial starting point by that amount.
+
+For example, for a dataset of 12 months, imagine you set the training set to 1 month, testing set to 10 days and skip variable for 1 month.
+The first sequence would train from Jan 1 - 31st and predict Feb 1 - 10th. The next sequence would skip a month and predict March 1 - 31st and predict April 1- 10th.
+
+```{r}
+# BACKTESTING
+
+tib_diff <- as_tibble(slim)
+#dfTs_tb <- select(dfTs_tb, index = SeriesInd, value = avg)
+train_sample <- 600
+test_sample <- 150
+skip = 30
+
+rolling_origin_samples <- rolling_origin(
+  tib_diff,
+  initial = train_sample,
+  assess = test_sample,
+# Cumulative = FALSE means the origin moves throughout iteration. This is so
+# more recent data doesn't have an advantage over older data which has 
+# less data to analyze
+  cumulative = FALSE, 
+  skip = skip
+)
+rolling_origin_samples
+```
+
+```{r}
+#Pick one slice to test on
+
+split <- rolling_origin_samples$splits[[10]]
+spli_id <- rolling_origin_samples$id[[10]]
+
+```
+
+
+```{r}
+#Split data into testing and training and add a key so we 
+#know what set they came from and bind the sets together
+df_trn <- training(split)
+df_tst <- testing(split)
+df <- bind_rows(
+    df_trn %>% add_column(key = "training"),
+    df_tst %>% add_column(key = "testing")) %>%
+  as_tbl_time(index = SeriesInd)
+    
+df
+
+```
+PreProcess the data
+
+```{r}
+rec_obj <- recipe(avg ~ ., df) %>%
+    step_sqrt(avg) %>%
+    step_center(avg) %>%
+    step_scale(avg) %>%
+    prep()
+
+df_processed_tbl <- bake(rec_obj, df)
+
+df_processed_tbl
+```
+Save the scale values
+
+```{r}
+center_history <- rec_obj$steps[[2]]$means["avg"]
+scale_history  <- rec_obj$steps[[3]]$sds["avg"]
+
+c("center" = center_history, "scale" = scale_history)
+```
+
+
+Build the model
+
+```{r}
+# Model inputs
+lag_setting  <- 150 # = prediction window (length of test set) 
+batch_size   <- 50 #!!MUST BE EVEN FACTOR WITH LAG AND TRAIN SIZES
+train_length <- 400
+tsteps       <- 1 # number of lags
+epochs       <- 300 #Number of backward/forward iterations (may need to be adjusted afterwards)
+```
+
+```{r}
+# Training Set
+lag_train_tbl <- df_processed_tbl %>%
+    mutate(value_lag = lag(avg, n = lag_setting)) %>%
+    filter(!is.na(value_lag)) %>%
+    filter(key == "training") %>%
+    tail(train_length)
+
+x_train_vec <- lag_train_tbl$value_lag
+x_train_arr <- array(data = x_train_vec, dim = c(length(x_train_vec), 1, 1))
+
+y_train_vec <- lag_train_tbl$avg
+y_train_arr <- array(data = y_train_vec, dim = c(length(y_train_vec), 1))
+
+# Testing Set
+lag_test_tbl <- df_processed_tbl %>%
+    mutate(
+        value_lag = lag(avg, n = lag_setting)
+    ) %>%
+    filter(!is.na(value_lag)) %>%
+    filter(key == "testing")
+
+x_test_vec <- lag_test_tbl$value_lag
+x_test_arr <- array(data = x_test_vec, dim = c(length(x_test_vec), 1, 1))
+
+y_test_vec <- lag_test_tbl$avg
+y_test_arr <- array(data = y_test_vec, dim = c(length(y_test_vec), 1))
+```
+
+
+```{r}
+model <- keras_model_sequential()
+
+model %>%
+    layer_lstm(units            = 50, 
+               input_shape      = c(tsteps, 1), 
+               batch_size       = batch_size,
+               return_sequences = TRUE, 
+               stateful         = TRUE) %>% 
+    layer_lstm(units            = 50, 
+               return_sequences = FALSE, 
+               stateful         = TRUE) %>% 
+    layer_dense(units = 1)
+
+model %>% 
+    compile(loss = 'mae', optimizer = 'rmsprop')
+
+model
+```
+
+```{r}
+for (i in 1:epochs) {
+    model %>% fit(x          = x_train_arr, 
+                  y          = y_train_arr, 
+                  batch_size = batch_size,
+                  epochs     = 1, 
+                  verbose    = 1, 
+                  shuffle    = FALSE)
+    
+    model %>% reset_states()
+    cat("Epoch: ", i)
+    
+}
+```
+
+```{r}
+# Make Predictions
+pred_out <- model %>% 
+    predict(x_test_arr, batch_size = batch_size) %>%
+    .[,1] 
+
+# Retransform values
+pred_tbl <- tibble(
+    SeriesInd  = lag_test_tbl$SeriesInd,
+    avg   = (pred_out * scale_history + center_history)^2
+) 
+
+# Combine actual data with predictions
+tbl_1 <- df_trn %>%
+    add_column(key = "actual")
+
+tbl_2 <- df_tst %>%
+    add_column(key = "actual")
+
+tbl_3 <- pred_tbl %>%
+    add_column(key = "predict")
+
+# Create time_bind_rows() to solve dplyr issue
+time_bind_rows <- function(data_1, data_2, index) {
+    index_expr <- enquo(index)
+    bind_rows(data_1, data_2) %>%
+        as_tbl_time(index = !! index_expr)
+}
+
+ret <- list(tbl_1, tbl_2, tbl_3) %>%
+    reduce(time_bind_rows, index = SeriesInd) %>%
+    arrange(key, SeriesInd) %>%
+    mutate(key = as_factor(key))
+
+ret
+```
+
+```{r}
+rmse_calculation <- function(data) {
+    data <- data %>%
+        spread(key = key, value = avg) %>%
+        select(-SeriesInd) %>%
+        filter(!is.na(predict)) 
+    
+    rmse(data$actual, data$predict)
+}
+    
+```
+
+
+```{r}
+rmse_calculation(ret)
+```
+
+Training the model on all the slices
+
+```{r}
+predict_keras_lstm <- function(split, epochs = 50, ...) {
+    
+    lstm_prediction <- function(split, epochs, ...) {
+        
+        # 5.1.2 Data Setup
+        df_trn <- training(split)
+        df_tst <- testing(split)
+        
+        df <- bind_rows(
+            df_trn %>% add_column(key = "training"),
+            df_tst %>% add_column(key = "testing")
+        ) %>% 
+            as_tbl_time(index = SeriesInd)
+        
+        
+        # 5.1.4 LSTM Plan
+        lag_setting  <- 150 # = nrow(df_tst)
+        batch_size   <- 50
+        train_length <- 400
+        tsteps       <- 1
+        epochs       <- epochs
+        
+        # 5.1.5 Train/Test Setup
+        lag_train_tbl <- df %>%
+            mutate(value_lag = lag(avg, n = lag_setting)) %>%
+            filter(!is.na(value_lag)) %>%
+            filter(key == "training") %>%
+            tail(train_length)
+        
+        x_train_vec <- lag_train_tbl$value_lag
+        x_train_arr <- array(data = x_train_vec, dim = c(length(x_train_vec), 1, 1))
+        
+        y_train_vec <- lag_train_tbl$avg
+        y_train_arr <- array(data = y_train_vec, dim = c(length(y_train_vec), 1))
+        
+        lag_test_tbl <- df %>%
+            mutate(
+                value_lag = lag(avg, n = lag_setting)
+            ) %>%
+            filter(!is.na(value_lag)) %>%
+            filter(key == "testing")
+        
+        x_test_vec <- lag_test_tbl$value_lag
+        x_test_arr <- array(data = x_test_vec, dim = c(length(x_test_vec), 1, 1))
+        
+        y_test_vec <- lag_test_tbl$avg
+        y_test_arr <- array(data = y_test_vec, dim = c(length(y_test_vec), 1))
+                
+        # 5.1.6 LSTM Model
+        model <- keras_model_sequential()
+
+        model %>%
+            layer_lstm(units            = 50, 
+                       input_shape      = c(tsteps, 1), 
+                       batch_size       = batch_size,
+                       return_sequences = TRUE, 
+                       stateful         = TRUE) %>% 
+            layer_lstm(units            = 50, 
+                       return_sequences = FALSE, 
+                       stateful         = TRUE) %>% 
+            layer_dense(units = 1)
+        
+        model %>% 
+            compile(loss = 'mae', optimizer = 'rmsprop')
+        
+        # 5.1.7 Fitting LSTM
+        for (i in 1:epochs) {
+            model %>% fit(x          = x_train_arr, 
+                          y          = y_train_arr, 
+                          batch_size = batch_size,
+                          epochs     = 1, 
+                          verbose    = 1, 
+                          shuffle    = FALSE)
+            
+            model %>% reset_states()
+            cat("Epoch: ", i)
+            
+        }
+        
+        # 5.1.8 Predict and Return Tidy Data
+        # Make Predictions
+        pred_out <- model %>% 
+            predict(x_test_arr, batch_size = batch_size) %>%
+            .[,1] 
+        
+        # Retransform values
+        pred_tbl <- tibble(
+            SeriesInd   = lag_test_tbl$SeriesInd,
+            avg   = pred_out
+        ) 
+        
+        # Combine actual data with predictions
+        tbl_1 <- df_trn %>%
+            add_column(key = "actual")
+        
+        tbl_2 <- df_tst %>%
+            add_column(key = "actual")
+        
+        tbl_3 <- pred_tbl %>%
+            add_column(key = "predict")
+        
+        # Create time_bind_rows() to solve dplyr issue
+        time_bind_rows <- function(data_1, data_2, index) {
+            index_expr <- enquo(index)
+            bind_rows(data_1, data_2) %>%
+                as_tbl_time(index = !! index_expr)
+        }
+        
+        ret <- list(tbl_1, tbl_2, tbl_3) %>%
+            reduce(time_bind_rows, index = SeriesInd) %>%
+            arrange(key, SeriesInd) %>%
+            mutate(key = as_factor(key))
+
+        return(ret)
+        
+    }
+    
+    safe_lstm <- possibly(lstm_prediction, otherwise = NA)
+    
+    safe_lstm(split, epochs, ...)
+    
+}
+```
+
+
+```{r}
+predict_keras_lstm(split, epochs = 10)
+```
+
+```{r}
+# sample_predictions <- rolling_origin_samples %>%
+#      mutate(predict = map(splits, predict_keras_lstm, epochs = 10))
+```
+
+Predict on original data
+
+
+```{r}       
+        
+# 5.1.4 LSTM Plan
+lag_setting  <- 150 # = nrow(df_tst)
+batch_size   <- 50
+train_length <- 400
+tsteps       <- 1
+epochs       <- 300
+
+# 5.1.5 Train/Test Setup
+lag_train_tbl <- df_processed_tbl %>%
+    mutate(value_lag = lag(avg, n = lag_setting)) %>%
+    filter(!is.na(value_lag)) %>%
+    tail(train_length)
+
+x_train_vec <- lag_train_tbl$value_lag
+x_train_arr <- array(data = x_train_vec, dim = c(length(x_train_vec), 1, 1))
+
+y_train_vec <- lag_train_tbl$avg
+y_train_arr <- array(data = y_train_vec, dim = c(length(y_train_vec), 1))
+
+x_test_vec <- y_train_vec %>% tail(lag_setting)
+x_test_arr <- array(data = x_test_vec, dim = c(length(x_test_vec), 1, 1))
+        
+# 5.1.6 LSTM Model
+model <- keras_model_sequential()
+
+model %>%
+    layer_lstm(units            = 50, 
+               input_shape      = c(tsteps, 1), 
+               batch_size       = batch_size,
+               return_sequences = TRUE, 
+               stateful         = TRUE) %>% 
+    layer_lstm(units            = 50, 
+               return_sequences = FALSE, 
+               stateful         = TRUE) %>% 
+    layer_dense(units = 1)
+
+model %>% 
+    compile(loss = 'mae', optimizer = 'rmsprop')
+
+# 5.1.7 Fitting LSTM
+for (i in 1:epochs) {
+    model %>% fit(x          = x_train_arr, 
+                  y          = y_train_arr, 
+                  batch_size = batch_size,
+                  epochs     = 1, 
+                  verbose    = 1, 
+                  shuffle    = FALSE)
+    
+    model %>% reset_states()
+    cat("Epoch: ", i)
+    
+}
+
+# 5.1.8 Predict and Return Tidy Data
+# Make Predictions
+pred_out <- model %>% 
+    predict(x_test_arr, batch_size = batch_size) %>%
+    .[,1] 
+
+# Make future index using tk_make_future_timeseries()
+idx <- slim %>%
+    tk_index() %>%
+    tk_make_future_timeseries(n_future = lag_setting)
+
+# Retransform values
+ pred_tbl <- tibble(
+    SeriesInd   = idx,
+    avg   = (pred_out * scale_history + center_history)^2
+) 
+```
+      
+```{r}
+pred_tbl <- pred_tbl %>%
+            add_column(key = "predict")
+
+actual_tbl <- slim %>%
+            add_column(key = "actual")
+
+final <- rbind(actual_tbl, pred_tbl)
+
+ggplot(final, aes(x = SeriesInd, y = avg, colour=key)) +
+  ggtitle("Avg high/low price") +
+  geom_line()
+```
+
+
+
+
+
+
+
+
+
+
+
+
