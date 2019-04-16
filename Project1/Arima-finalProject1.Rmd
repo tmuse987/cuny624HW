@@ -354,7 +354,12 @@ Data looks more stationary after applying differencing to Var01,Var02,Var03,Var0
 #### <span style="color:red"><b><u>Group S04 Forecast</u></b></span>
 #### <span style="color:red"><b><u>Group S05 Forecast</u></b></span>
 
-###This Section is using ARIMA for now.
+### ARIMA 
+ARIMA (autoregressive integrated moving average) is a commonly used technique utilized to fit time series data and forecasting. It is a generalized version of ARMA (autoregressive moving average) process, where the ARMA process is applied for a differenced version of the data rather than original.
+
+Three numbers p, d and q specify ARIMA model and the ARIMA model is said to be of order (p,d,q). Here p, d and q are the orders of AR part, Difference and the MA part respectively.
+
+AR and MA- both are different techniques to fit stationary time series data. ARMA (and ARIMA) is a combination of these two methods for better fit of the model.
 
 First let's get the dataframe data into a timeseries for variable 02.
 The data is stored as a series of dates, 5 days with a break after, so essentially 52 weeks times 5 days will divide it up nicely into 7 years of data.  We will then fit the data using auto.arima to find the appropriate values for P,D,Q (p = the number of lag observations, d = degree of differencing, and q = size of the moving average window, for lagged forecast errors ).
