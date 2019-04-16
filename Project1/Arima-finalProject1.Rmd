@@ -46,7 +46,6 @@ library(ggcorrplot)
 library(astsa)
 library(janitor)
 library(timeDate)
-library(scales)
 ```
 #### <span style="color:red"><b><u>Exploratory Data Analysis and Data Cleaning </u></b></span>
 
@@ -68,20 +67,6 @@ group_S04_df = filter(project_in_df, group == 'S04')
 group_S05_df = filter(project_in_df, group == 'S05')
 group_S06_df = filter(project_in_df, group == 'S06')
 
-Looking at the data we found that the data is financial stock market data from 6 different companies.
-The Variables represent the following
-# Var01 - High of the day
-# Var02 - Volume
-# Var03 - Low of the day
-# Var05 - Open for the day
-# Var07 - Close for the day
-
-ggplot(group_S01_df, aes(datetime, Var07)) + geom_line(colour="#000099") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
-ggplot(group_S02_df, aes(datetime, Var07)) + geom_line(colour="#990000") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
-ggplot(group_S03_df, aes(datetime, Var07)) + geom_line(colour="#009900") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
-ggplot(group_S04_df, aes(datetime, Var07)) + geom_line(colour="#990099") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
-ggplot(group_S05_df, aes(datetime, Var07)) + geom_line(colour="#999900") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
-ggplot(group_S06_df, aes(datetime, Var07)) + geom_line(colour="#009999") + scale_x_date(labels = date_format("%b-%Y")) + xlab("datetime") + ylab("Var07")
 
 #remove forecast cells for now
 #project_in_df <- project_in_df[1:9732,]
@@ -167,54 +152,66 @@ group_S06_df = select (group_S06_df, matches("SeriesInd|datetime|group|Var05|Var
 print (c(nrow(group_S01_df), nrow(group_S02_df), nrow(group_S03_df), nrow(group_S04_df), nrow(group_S05_df), nrow(group_S06_df)))
 
 # Verify dataframes
-head(project_in_df, 10)
-head(group_S01_df, 10)
-head(group_S02_df, 10)
-head(group_S03_df, 10)
-head(group_S04_df, 10)
-head(group_S05_df, 10)
-head(group_S06_df, 10)
+head(project_in_df, 20)
+head(group_S01_df, 20)
+head(group_S02_df, 20)
+head(group_S03_df, 20)
+head(group_S04_df, 20)
+head(group_S05_df, 20)
+head(group_S06_df, 20)
 ```
 Lets start looking at the data.
 First we are making line plots for all the groups and variables we will be forecasting.
 
 ```{r}
-SeriesInd1 <- as.Date(group_S01_df$SeriesInd,origin = "1899-12-30")
-SeriesInd2 <- as.Date(group_S02_df$SeriesInd,origin = "1899-12-30")
-SeriesInd3 <- as.Date(group_S03_df$SeriesInd,origin = "1899-12-30")
-SeriesInd4 <- as.Date(group_S04_df$SeriesInd,origin = "1899-12-30")
-SeriesInd5 <- as.Date(group_S05_df$SeriesInd,origin = "1899-12-30")
-SeriesInd6 <- as.Date(group_S06_df$SeriesInd,origin = "1899-12-30")
-p1 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var02, color = variable)) + ggtitle("S01") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p1 <- ggplot(group_S01_df, aes(SeriesInd, y = Var02, color = variable)) + 
+      ggtitle("S01") +
+     geom_line(aes(y = Var02, col = "Var02"))
 
-p2 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var01, color = variable)) + ggtitle("S01") + geom_line(aes(y = Var01, col = "Var01")) + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p2 <- ggplot(group_S01_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    ggtitle("S01") + 
+    geom_line(aes(y = Var01, col = "Var01"))
 
-p3 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var02,color = variable))+ ggtitle("S02") + geom_line(aes(y = Var02, col = "Var02"))  +xlab("Time")+ theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p3 <- ggplot(group_S02_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var02, col = "Var02"))
 
 
-p4 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var03,color = variable))+ ggtitle("S02") +  geom_line(aes(y = Var03, col = "Var03")) +xlab("Time")+ theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p4 <- ggplot(group_S02_df, aes(SeriesInd, y = Var03,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var03, col = "Var03"))
 
-p5 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) + ggtitle("S03")+ xlab("Time") + theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p5 <- ggplot(group_S03_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S03") 
 
-p6 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var07, color = variable)) +  geom_line(aes(y = Var07, col = "Var07")) + ggtitle("S03")  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p6 <- ggplot(group_S03_df, aes(SeriesInd, y = Var07, color = variable)) + 
+    geom_line(aes(y = Var07, col = "Var07")) +
+    ggtitle("S03") 
   
-p7 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var01, color = variable)) + geom_line(aes(y = Var01, col = "Var01")) + ggtitle("S04")  +xlab("Time")+ theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-p8 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var02,color = variable))+ ggtitle("S04") + geom_line(aes(y = Var02, col = "Var02"))  +xlab("Time")+ theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p7 <- ggplot(group_S04_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    geom_line(aes(y = Var01, col = "Var01")) + 
+    ggtitle("S04") 
+p8 <- ggplot(group_S04_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S04") + 
+    geom_line(aes(y = Var02, col = "Var02"))
 
 
-p9 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var03, color = variable)) + ggtitle("S05") +geom_line(aes(y = Var03, col = "Var03"))  + xlab("Time")+theme_bw()+
-theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p9 <- ggplot(group_S05_df, aes(SeriesInd, y = Var03, color = variable)) + 
+   ggtitle("S05") +
+    geom_line(aes(y = Var03, col = "Var03"))
 
-p10 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var02,color = variable))+ ggtitle("S05") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p10 <- ggplot(group_S05_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S05") + 
+    geom_line(aes(y = Var02, col = "Var02"))
 
-p11 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) +
-ggtitle("S06")  +xlab("Time")+ theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p11 <- ggplot(group_S06_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S06")
 
-p12 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var07, color = variable)) + ggtitle("S06") + geom_line(aes(y = Var07, col = "Var07"))  + xlab("Time")+theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p12 <- ggplot(group_S06_df, aes(SeriesInd, y = Var07, color = variable)) + 
+     ggtitle("S06") +
+    geom_line(aes(y = Var07, col = "Var07"))
 grid.arrange(p1, p2, nrow = 1)
 grid.arrange(p3, p4, nrow = 1)
 grid.arrange(p5, p6, nrow = 1)
@@ -264,43 +261,54 @@ group_S06_df$Var07=Remove_Outlier(group_S06_df$Var07)
 Lets plot again plots for the variables to check if the outliers are fixed
 
 ```{r}
-p1 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var02, color = variable)) + ggtitle("S01") + geom_line(aes(y = Var02, col = "Var02")) + xlab("Time")+theme_bw() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p1 <- ggplot(group_S01_df, aes(SeriesInd, y = Var02, color = variable)) + 
+      ggtitle("S01") +
+     geom_line(aes(y = Var02, col = "Var02"))
 
-p2 <- ggplot(group_S01_df, aes(SeriesInd1, y = Var01, color = variable)) +  ggtitle("S01") + geom_line(aes(y = Var01, col = "Var01"))  +xlab("Time")+ theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p2 <- ggplot(group_S01_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    ggtitle("S01") + 
+    geom_line(aes(y = Var01, col = "Var01"))
 
-p3 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var02,color = variable))+ ggtitle("S02") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
-theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p3 <- ggplot(group_S02_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var02, col = "Var02"))
 
 
-p4 <- ggplot(group_S02_df, aes(SeriesInd2, y = Var03,color = variable))+ ggtitle("S02") + geom_line(aes(y = Var03, col = "Var03"))  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p4 <- ggplot(group_S02_df, aes(SeriesInd, y = Var03,color = variable))+
+    ggtitle("S02") + 
+    geom_line(aes(y = Var03, col = "Var03"))
 
-p5 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) +
-ggtitle("S03")  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p5 <- ggplot(group_S03_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S03") 
 
-p6 <- ggplot(group_S03_df, aes(SeriesInd3, y = Var07, color = variable)) + geom_line(aes(y = Var07, col = "Var07")) +
-ggtitle("S03")  + xlab("Time")+theme_bw()+ theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p6 <- ggplot(group_S03_df, aes(SeriesInd, y = Var07, color = variable)) + 
+    geom_line(aes(y = Var07, col = "Var07")) +
+    ggtitle("S03") 
   
-p7 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var01, color = variable)) +  geom_line(aes(y = Var01, col = "Var01")) + 
-    ggtitle("S04")  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-p8 <- ggplot(group_S04_df, aes(SeriesInd4, y = Var02,color = variable))+ ggtitle("S04") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p7 <- ggplot(group_S04_df, aes(SeriesInd, y = Var01, color = variable)) + 
+    geom_line(aes(y = Var01, col = "Var01")) + 
+    ggtitle("S04") 
+p8 <- ggplot(group_S04_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S04") + 
+    geom_line(aes(y = Var02, col = "Var02"))
 
 
-p9 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var03, color = variable)) + ggtitle("S05") + geom_line(aes(y = Var03, col = "Var03"))  + xlab("Time")+theme_bw()+
-theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p9 <- ggplot(group_S05_df, aes(SeriesInd, y = Var03, color = variable)) + 
+   ggtitle("S05") +
+    geom_line(aes(y = Var03, col = "Var03"))
 
-p10 <- ggplot(group_S05_df, aes(SeriesInd5, y = Var02,color = variable))+ ggtitle("S05") + geom_line(aes(y = Var02, col = "Var02"))  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p10 <- ggplot(group_S05_df, aes(SeriesInd, y = Var02,color = variable))+
+    ggtitle("S05") + 
+    geom_line(aes(y = Var02, col = "Var02"))
 
-p11 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var05, color = variable)) + geom_line(aes(y = Var05, col = "Var05")) +
-ggtitle("S06")  + xlab("Time")+theme_bw()+
-theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p11 <- ggplot(group_S06_df, aes(SeriesInd, y = Var05, color = variable)) + 
+    geom_line(aes(y = Var05, col = "Var05")) +
+    ggtitle("S06")
 
-p12 <- ggplot(group_S06_df, aes(SeriesInd6, y = Var07, color = variable)) + ggtitle("S06") + geom_line(aes(y = Var07, col = "Var07"))  + xlab("Time")+theme_bw()+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+p12 <- ggplot(group_S06_df, aes(SeriesInd, y = Var07, color = variable)) + 
+     ggtitle("S06") +
+    geom_line(aes(y = Var07, col = "Var07"))
 grid.arrange(p1, p2, nrow = 1)
 grid.arrange(p3, p4, nrow = 1)
 grid.arrange(p5, p6, nrow = 1)
@@ -322,19 +330,19 @@ par(mfrow=c(1,2))
 p1 <- plot(group_S01_df$Var01, type = "l", main = "original dataS01&Var01")
 p2 <- plot(diff(group_S01_df$Var01), type = "l", main = "Diff dataS01&Var01")
 p3 <- plot(group_S01_df$Var02, type = "l", main = "original dataS01&Var02")
-p4 <- plot(diff(log(group_S01_df$Var02)), type = "l", main = "Diff dataS01&Var02")
+p4 <- plot(diff(log(group_S01_df$Var02)), type = "l", main = "LogdataS01&Var02")
 p5 <- plot(group_S02_df$Var02, type = "l", main = "original dataS02&Var02")
-p6 <- plot(diff(log(group_S02_df$Var02)), type = "l", main = "Diff dataS02&Var02")
+p6 <- plot(diff(log(group_S02_df$Var02)), type = "l", main = "LogdataS02&Var02")
 p7 <- plot(group_S02_df$Var03, type = "l", main = "originaldataS02&Var03")
 p8 <- plot(diff(group_S02_df$Var03), type = "l", main = "DiffdataS02&Var03")
 p9 <- plot(group_S03_df$Var05, type = "l", main = "original dataS03&Var05")
 p10 <- plot(diff(group_S03_df$Var05), type = "l", main = "Diff dataS03&Var05")
 p11 <- plot(group_S03_df$Var07, type = "l", main = "original dataS03&Var07")
-p12 <- plot(diff(group_S03_df$Var07), type = "l", main = "Diff dataS03&Var07")
+p12 <- plot(diff(group_S03_df$Var07), type = "l", main = "LogdataS03&Var07")
 p13 <- plot(group_S04_df$Var01, type = "l", main = "original dataS04&Var01")
 p14 <- plot(diff(group_S04_df$Var01), type = "l", main = "Diff dataS04&Var04")
 p15 <- plot(group_S04_df$Var02, type = "l", main = "original dataS04&Var02")
-p16 <- plot(diff(log(group_S04_df$Var02)), type = "l", main = "Diff dataS04&Var02")
+p16 <- plot(diff(log(group_S04_df$Var02)), type = "l", main = "LogdataS04&Var02")
 p17 <- plot(group_S05_df$Var02, type = "l", main = "original dataS05&Var02")
 p18 <- plot(diff(log(group_S05_df$Var02)), type = "l", main = "Diff dataS05&Var02")
 p19 <- plot(group_S05_df$Var03, type = "l", main = "original dataS05&Var03")
@@ -346,7 +354,7 @@ p24 <- plot(diff(group_S06_df$Var07), type = "l", main = "DiffdataS06&Var07")
 ```
 
 Data looks like it eliminated noise compared to the orginal.
-Data looks more stationary after applying differencing to Var01,Var02,Var03,Var05,Var07.
+Data looks more stationary after applying differencing to Var01,Var03,Var05,Var07 and applying logarithm Var02.
 
 #### <span style="color:red"><b><u>Group S01 Forecast</u></b></span>
 #### <span style="color:red"><b><u>Group S02 Forecast</u></b></span>
@@ -354,12 +362,7 @@ Data looks more stationary after applying differencing to Var01,Var02,Var03,Var0
 #### <span style="color:red"><b><u>Group S04 Forecast</u></b></span>
 #### <span style="color:red"><b><u>Group S05 Forecast</u></b></span>
 
-### ARIMA 
-ARIMA (autoregressive integrated moving average) is a commonly used technique utilized to fit time series data and forecasting. It is a generalized version of ARMA (autoregressive moving average) process, where the ARMA process is applied for a differenced version of the data rather than original.
-
-Three numbers p, d and q specify ARIMA model and the ARIMA model is said to be of order (p,d,q). Here p, d and q are the orders of AR part, Difference and the MA part respectively.
-
-AR and MA- both are different techniques to fit stationary time series data. ARMA (and ARIMA) is a combination of these two methods for better fit of the model.
+###This Section is using ARIMA for now.
 
 First let's get the dataframe data into a timeseries for variable 02.
 The data is stored as a series of dates, 5 days with a break after, so essentially 52 weeks times 5 days will divide it up nicely into 7 years of data.  We will then fit the data using auto.arima to find the appropriate values for P,D,Q (p = the number of lag observations, d = degree of differencing, and q = size of the moving average window, for lagged forecast errors ).
@@ -383,9 +386,9 @@ Looking at the residuals from the package output, we see that they look like whi
 
 Note the box test results show that there may still be correlation on the residuals as the 
 ```{r}
-sarima(TsVar02, 1, 1, 3)
+#sarima(TsVar02, 1, 1, 2)
 
-fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
+fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 2, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S05_df[1623:1762,2] <- fSarima$pred
@@ -455,14 +458,17 @@ pacf(diff(TsVar03))
 Looking at the plots is seems like a (1,1,4) model might be better for Var02 considering the number of spikes in the acf graph.  Rerunning using that model, the box test results look better, althought the AIC numbers are virtually unchanged.
 
 The 2,1,1 based on the acf graphs looks reasonable for Var03.
-```{r}
-sarima(TsVar02, 4, 1, 4)
-sarima.for(TsVar02, 140, 4, 1,4,plot.all = TRUE)
+```{r echo = FALSE}
+#sarima(TsVar02, 4, 1, 4)
+fSarima <- sarima.for(TsVar02, 140, 4, 1,4,plot.all = TRUE)
+
 ```
 
 ###Model the other variables for the other stocks
 ####S01 Var01, var02
-```{r}
+
+Not the code is hidden from the report for brevity, as it is similar commands as in the above code, just against the variables in the others stocks.
+```{r echo = FALSE}
 TsVar01 <- ts(group_S01_df$Var01, frequency = 5*52)
 arimaFitVar01 <- auto.arima(TsVar01, seasonal = FALSE)
 arimaFitVar01
@@ -471,22 +477,22 @@ arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
 arimaFitVar02
 ```
 
-```{r}
-sarima(TsVar01, 0, 1, 2)
+```{r echo = FALSE}
+#sarima(TsVar01, 0, 1, 2)
 
 fSarima <- sarima.for(TsVar01[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S01_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar01, 1, 1, 3)
+#sarima(TsVar01, 1, 1, 3)
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S01_df[1623:1762,3] <- fSarima$pred
 ```
 
 ####S02 Var02, var03
-```{r}
+```{r echo = FALSE}
 TsVar02 <- ts(group_S02_df$Var02, frequency = 5*52)
 arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
 arimaFitVar02
@@ -495,15 +501,15 @@ arimaFitVar03 <- auto.arima(TsVar03, seasonal = FALSE)
 arimaFitVar03
 ```
 
-```{r}
-sarima(TsVar02, 2, 1, 3)
+```{r echo = FALSE}
+#sarima(TsVar02, 2, 1, 3)
 
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S02_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar03, 0, 1, 1)
+#sarima(TsVar03, 0, 1, 1)
 fSarima <- sarima.for(TsVar03[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S02_df[1623:1762,3] <- fSarima$pred
@@ -511,7 +517,7 @@ group_S02_df[1623:1762,3] <- fSarima$pred
 
 
 ####S03 Var05, var07
-```{r}
+```{r echo = FALSE}
 TsVar05 <- ts(group_S03_df$Var05, frequency = 5*52)
 arimaFitVar05 <- auto.arima(TsVar05, seasonal = FALSE)
 arimaFitVar05
@@ -520,22 +526,22 @@ arimaFitVar07 <- auto.arima(TsVar07, seasonal = FALSE)
 arimaFitVar07
 ```
 
-```{r}
-sarima(TsVar05, 1, 1, 0)
+```{r echo = FALSE}
+#sarima(TsVar05, 1, 1, 0)
 
 fSarima <- sarima.for(TsVar05[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S03_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar07, 0, 1, 0)
+#sarima(TsVar07, 0, 1, 0)
 fSarima <- sarima.for(TsVar07[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S03_df[1623:1762,3] <- fSarima$pred
 ```
 
 ####S04 Var01, var02
-```{r}
+```{r echo = FALSE}
 TsVar01 <- ts(group_S04_df$Var01, frequency = 5*52)
 arimaFitVar01 <- auto.arima(TsVar01, seasonal = FALSE)
 arimaFitVar01
@@ -544,15 +550,15 @@ arimaFitVar02 <- auto.arima(TsVar02, seasonal = FALSE)
 arimaFitVar02
 ```
 
-```{r}
-sarima(TsVar01, 0, 1, 0)
+```{r echo = FALSE}
+#sarima(TsVar01, 0, 1, 0)
 
 fSarima <- sarima.for(TsVar01[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S04_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar02, 2, 1, 3)
+#sarima(TsVar02, 2, 1, 3)
 fSarima <- sarima.for(TsVar02[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S04_df[1623:1762,3] <- fSarima$pred
@@ -560,7 +566,7 @@ group_S04_df[1623:1762,3] <- fSarima$pred
 
 
 ####S06 Var05, var07
-```{r}
+```{r echo = FALSE}
 TsVar05 <- ts(group_S06_df$Var05, frequency = 5*52)
 arimaFitVar05 <- auto.arima(TsVar05, seasonal = FALSE)
 arimaFitVar05
@@ -569,15 +575,14 @@ arimaFitVar07 <- auto.arima(TsVar07, seasonal = FALSE)
 arimaFitVar07
 ```
 
-```{r}
-sarima(TsVar05, 0, 1, 1)
-
+```{r echo = FALSE}
+#sarima(TsVar05, 0, 1, 1)
 fSarima <- sarima.for(TsVar05[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 #save prediction into df
 group_S06_df[1623:1762,2] <- fSarima$pred
 
-sarima(TsVar07, 0, 1, 1)
+#sarima(TsVar07, 0, 1, 1)
 fSarima <- sarima.for(TsVar07[1:1622], 140, 1, 1, 3, plot.all = TRUE)
 fSarima$pred[1:20]
 group_S06_df[1623:1762,3] <- fSarima$pred
@@ -585,7 +590,7 @@ group_S06_df[1623:1762,3] <- fSarima$pred
 
 #### <span style="color:red"><b><u>Group S06 Forecast</u></b></span>
 
-```{r}
+```{r echo = FALSE}
 #put the sequence numbers back in
 seqNumbers <- distinct(as.data.frame(project_in_df[,1]))
 group_S01_df[,1] = seqNumbers
@@ -598,7 +603,7 @@ group_S06_df[,1] = seqNumbers
 ```
 
 #### <span style="color:red"><b><u>Export Results</u></b></span>
-```{r}
+```{r echo = FALSE}
 write.xlsx(project_in_df, file = "output.xls", sheetName = "Set for Class", row.names=FALSE, append = FALSE)
 write.xlsx(group_S01_df, file = "output.xls", sheetName = "S01", row.names=FALSE, append = TRUE)
 write.xlsx(group_S02_df, file = "output.xls", sheetName = "S02", row.names=FALSE, append = TRUE)
