@@ -1,0 +1,123 @@
+---
+title: "HW2"
+author: "Todd Weigel"
+date: "April 27, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Problem 8.1 from Max Kuhn, Kjell Johnson
+
+####Setup
+```{r}
+library(mlbench)
+library(randomForest)
+library(caret)
+library(party)
+library(ipred)
+library(gbm)
+library(Cubist)
+set.seed(200)
+simulated <- mlbench.friedman1(200, sd =1)
+simulated <- cbind(simulated$x, simulated$y)
+simulated <- as.data.frame(simulated)
+colnames(simulated)[ncol(simulated)] <- "y"
+```
+
+###8.1A
+Fit a random forest to model to all predictors and estimate the importance scores of the variables.
+```{r}
+model1 <- randomForest(y ~ . , data= simulated, importance = TRUE, ntree = 1000)
+rfImp1 <- varImp(model1, scale = FALSE)
+rfImp1
+```
+
+Examining the predictors, we see that variable importance for variables 6-10, show that these variables do not contribute much.  Variable 6 has minimal predictive ability but 7-10 have very small importance values and are negative.
+
+###8.1B
+
+Now we will add another highly correlated predictor variable, and see how the model changes predictive weights.  First we add in a variable that is a slight variation on V1, and we see about 94% correlation.
+```{R}
+simulatedAddCorVar <- simulated
+simulatedAddCorVar$duplicate1 <- simulatedAddCorVar$V1 + rnorm(200) * .1
+cor(simulatedAddCorVar$duplicate1,  simulatedAddCorVar$V1)
+```
+
+Let's refit a model with the random forest model.  When we do that we see that the importance of V1 decreases with the new near "duplicative" predictor we added.  Basically adding a well correlated variable decreases the importance of the first variable.
+
+```{r}
+model1 <- randomForest(y ~ . , data= simulatedAddCorVar, importance = TRUE, ntree = 1000)
+rfImp1 <- varImp(model1, scale = FALSE)
+rfImp1
+
+
+```
+
+###8.3
+Fit a different model, cforest, to the data, and examine the predictive values of the variables with this model.  We will check the variable importance with the varimp conditional flag set to true and false and compare the differences.  The conditional toggle will switch between weighting importance using traditional measures and those described by Strobl et al here: <a> https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-9-307</a>
+
+We see that the predictive values (with either toggle of the conditional flag), while not the same do closely mirror what we saw with the original random forest model, in that the relative importance of each predictor to the others has not changd (e.g., V3 in each model is less important the the other variables from V1-V5).  We also see with the conditional flag set, the predictive values of each of the first 5 variables are all closer together.
+
+```{r}
+model1 <- cforest(y ~ . , data= simulated, controls = cforest_unbiased(ntree = 1000))
+cfImp1 <- varimp(model1)
+cfImp1
+
+cfImp1 <- varimp(model1, conditional = TRUE)
+cfImp1
+```
+###8.4
+We will repeat the above process with some other models: "bagged" tree, "boosted" tree model, as well as the Cubist model.
+
+First the bagged tree model.  Here we see that variable importance is noticeably different from the prior models.  V6-V10 are still do not have as great an importance, but their relative importance is higher.  And the importance between variables V1-V5 does not vary nearly as much as some of the other models.
+
+```{r}
+baggedTree <- bagging(y ~ ., data = simulated)
+bagImp1 <- varImp(baggedTree)
+bagImp1 
+```
+
+We also tried the bagged model with the additional correlated variable.  It's weighting of variable importance, unlike prior models did not change much with the addition of the correlated variable.
+```{r}
+baggedTree <- baggedTree <- bagging(y ~ ., data = simulatedAddCorVar)
+bagImp1 <- varImp(baggedTree)
+bagImp1
+```
+
+The Boosted Trees model.
+Here we see that this model suggests only using 4 variables as predictors (V1, V2, V4, V5).
+```{r}
+boostTreeModel <- gbm.fit(simulated[,1:10], simulated[,11], distribution = "gaussian", verbose = FALSE)
+boostImp <- varImp(boostTreeModel, numTrees = 100)
+boostImp
+```
+If we add in the additional correlated variable, we see that it reduces the predictive value of many of the variables as before.
+
+```{r}
+
+boostTreeModel <- gbm.fit(simulatedAddCorVar[,c(1:10,12)], simulatedAddCorVar[,11], distribution = "gaussian", verbose = FALSE)
+boostImp <- varImp(boostTreeModel, numTrees = 100)
+boostImp
+```
+Lastly now the Cubist model.
+
+It gives predictive values for four variables only (V1,V2,V4,V5) and interestingly, the predictive value for each of them is equally weighted.
+
+```{r}
+library(Cubist)
+cubistMod <- cubist(simulated[,1:10], simulated[,11])
+varImp(cubistMod)
+```
+
+If we add in the additional correlated variable to the cubst model, it does not affect the predictive value of the four variables that were predicive, it just adds in the correlated variable at the same predictive level.
+
+```{r}
+
+library(Cubist)
+cubistMod <- cubist(simulatedAddCorVar[,c(1:10,12)], simulatedAddCorVar[,11],)
+varImp(cubistMod)
+
+```
