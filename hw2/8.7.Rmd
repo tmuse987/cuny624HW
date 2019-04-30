@@ -36,7 +36,7 @@ processPredictors <- ChemicalManufacturingProcess
 ```{r}
 summary(processPredictors)
 ```
-A small percentage of cells in the redictor set contain missing values. Use an imputation function to fill in these missing values
+A small percentage of cells in the redictor set contain missing values. Use an knnimputation function to fill in these missing values
 
 The summary for this dataset shows that many columns have 5 or less missing values. The column `ManufacturingProcess03` had the most missing values with 15.
 
