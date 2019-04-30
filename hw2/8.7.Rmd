@@ -1,0 +1,162 @@
+---
+title: 'DATA 624 Spring 2019: Homework-2'
+author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
+date: "April 29, 2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##### <span style="color:blue"><b><u>KJ# 8.7</u></b></span><div id="8.7.PNG"><img src="8.7.PNG" alt="8.7.PNG"></div>
+```{r}
+library(AppliedPredictiveModeling)
+library(DMwR)
+library(caret)
+library(party)
+library(rpart)
+library(rpart.plot)
+library(ipred)
+library(randomForest)
+library(gbm)
+library(Cubist)
+```
+
+8.7  Refer to Exercises 6.3 and 7.5 which describe a chemical manufacturing process. Use the same data imputation, data splitting, and pre-processing steps as before and train several tree-based models:
+
+
+```{r}
+data("ChemicalManufacturingProcess")
+processPredictors <- ChemicalManufacturingProcess
+```
+
+
+```{r}
+summary(processPredictors)
+```
+A small percentage of cells in the redictor set contain missing values. Use an imputation function to fill in these missing values
+
+The summary for this dataset shows that many columns have 5 or less missing values. The column `ManufacturingProcess03` had the most missing values with 15.
+
+
+```{r}
+# imputing null values
+completeData <- knnImputation(ChemicalManufacturingProcess[, 1:57], k = 3, meth = "weighAvg")
+
+# Standardizing and scaling the predictors
+completeData[,2:(ncol(completeData))] <- scale(completeData[,2:(ncol(completeData))])
+
+# Splitting the data into training and testing data sets.
+set.seed(1)
+data_training <- createDataPartition(completeData$Yield, p = 0.80, list=FALSE)
+training <- completeData[ data_training,]
+testing <- completeData[-data_training,]
+
+X_train <- training[,2:(length(training))]
+Y_train <- training$Yield
+
+X_test <- testing[,2:(length(testing))]
+Y_test <- testing$Yield
+```
+data is now imputed, cleaned, pre-processed and splitted.
+```{r}
+head(completeData)
+```
+We will be using RMSE from the test set performance to determine the most optimal tree-based regression model.
+
+A. Which tree-based regression model gives the optimal resampling and test set performance?
+
+We are using here several tree-based regression models single tree,bagged trees,random forest,boosted trees and cubist. Given that we are comparing different trees, we will be utilizing the RMSE values from the test set performance to choose the most optimal model.
+
+Single Tree
+```{r}
+set.seed(1)
+rpartTune <- train(X_train, Y_train, method = "rpart2",
+                   tuneLength = 10,
+                   trControl = trainControl(method = "cv"))
+rpartTune
+```
+```{r}
+y_pred <- predict(rpartTune, X_test)
+RMSE(y_pred, Y_test)
+```
+
+Bagged Trees
+
+```{r}
+
+set.seed(1)
+train_df <- cbind(X_train, Y_train)
+
+baggedTree <- bagging(Y_train ~ ., data = train_df)
+baggedTree
+```
+```{r}
+summary(baggedTree)
+```
+```{r}
+# Checking RMSE for bagged tree based model
+y_pred <- predict(baggedTree, X_test)
+RMSE(y_pred, Y_test)
+```
+Random Forest
+```{r}
+
+rfModel <- randomForest(X_train, Y_train,
+                        importance = TRUE,
+                        ntress = 1000)
+rfModel
+```
+```{r}
+# Checking RMSE for random forest based model
+y_pred <- predict(rfModel, X_test)
+RMSE(y_pred, Y_test)
+
+```
+Boosted Trees
+
+```{r}
+
+gbmModel <- gbm.fit(X_train, Y_train, distribution = "gaussian")
+gbmModel
+# Checking RMSE for boosted tree based model
+y_pred <- predict(gbmModel, X_test, n.trees=100)
+RMSE(y_pred, Y_test)
+```
+Cubist
+```{r}
+
+cubistMod <- cubist(X_train, Y_train)
+cubistMod
+y_pred <- predict(cubistMod, X_test)
+RMSE(y_pred, Y_test)
+```
+It appears that the random forest had the smallest RMSE, so we will choose the random forest as the most optimal model.
+
+B. Which predictors are most important in the optimal tree-based regression model? Do either the biological or process variables dominate the list? How do the top 10 important predictors compare to the top 10 predictors from the optimal linear and nonlinear models?
+
+We will be using the random forest model.
+
+```{r}
+a <- varImp(rfModel)
+a$Variables <- rownames(a)
+rownames(a) <- 1:nrow(a)
+
+head(a[order(a$Overall, decreasing = TRUE),],10)
+```
+There are 6 Biological Material and 6 Manufacturing Processes in the top 10 and ManufacturingProcess32 and BiologicalMaterial06 were on the top.
+
+C. Plot the optimal single tree with the distribution of yield in the terminal nodes. Does this view of the data provide additional knowledge about the biological or process predictors and their relationship with yield?
+```{r}
+
+rpartTree <- rpart(Y_train ~ ., data = train_df)
+#summary(rpartTree)
+```
+
+```{r}
+prp(rpartTree)
+
+```
+The single tree seems to confirm the importance of ManufacturingProcess32 which then breaks down into different branches incluindg BiologicalMaterial12 and  BiologicalMaterial06. The Biological materials and manufacturing processes are mixed in the top 10 for variable importance.we can say that manufacturer processes have a larger impacting role towards yield then biological factors but Biological materials are the initial nodes and are also influential.
