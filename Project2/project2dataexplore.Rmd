@@ -1,0 +1,91 @@
+---
+title: 'DATA 624 Spring 2019: Project-2'
+author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
+date: "April 29, 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Loading the data set 
+```{r}
+project_df <-read.csv("StudentData.csv",sep=",",header=TRUE,stringsAsFactors=FALSE)
+dim(project_df)
+```
+
+From the above result dataset has 33 variables and 2571 observations.so we have 32 predictor variables and 1 target variable.
+Lets look at summary of data
+
+```{r}
+summary(project_df)
+#str(project_df)
+```
+
+From the summary results - The variable Brandcode is a character type .All the other variables are numeric and integers.
+We can see null values in all variables except Air.Pressure and Pressure.Vacuum.We can have a look through plot
+
+```{r}
+project_df[, c(16, 18, 21, 28)] <- sapply(project_df[, c(16, 18, 21, 28)], as.numeric) # converting int to numeric
+```
+
+Lets look at the missing values in the dataset
+```{r}
+library(naniar)
+gg_miss_var(project_df)
+```
+The above plot shows that MFR has most missing values.
+
+To have a better look to see distribution of the variables lets plot histogram of all variables
+
+```{r}
+par(mfrow = c(3,5), cex = .5)
+project_df <- project_df[2:ncol(project_df)]
+for(i in colnames(project_df)){
+hist(project_df[,i], xlab = names(project_df[i]),
+  main = names(project_df[i]), col="light blue", ylab="")
+}
+```
+From the above some of the variables shows nearly normal distributions.Some of variables shows strong skewness that means the presence of outliers.
+Also some variables have many near to zero values.
+Some varibles need transformations here.
+(need to update all these)
+Plotting boxplots of all variables will give better understanding with outliers and provide a view to look for what approach should be considered to fix the outliers.
+
+```{r}
+par(mfrow = c(3,5), cex = .5)
+for(i in colnames(project_df)){
+boxplot(project_df[,i], xlab = names(project_df[i]),
+  main = names(project_df[i]), col="light blue", ylab="")
+}
+```
+
+(update here with method to fix outliers)
+
+CORRELATIONS BETWEEN VARIABLES :-
+
+```{r}
+library(corrplot)
+plotcorr =cor(project_df,use="pairwise.complete.obs", method = "pearson")
+
+corrplot(plotcorr, method = "color",type = "upper", order = "original", number.cex = .7,tl.pos = "td",tl.cex = 0.5, tl.srt = 90,diag = TRUE)
+
+```
+```{r}
+library(caret)
+hc = findCorrelation(plotcorr, cutoff=0.75)
+hc
+```
+We have found out the variables that are very highly correlated with each other.we can remove these variables (need to discuss with everyone here)
+Let us now look at the correlation between the target (pH) variable and the predictors.
+
+```{r}
+library(corrr)
+project_df %>% correlate() %>% focus(PH)
+```
+
+
