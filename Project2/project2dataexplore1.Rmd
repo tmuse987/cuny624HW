@@ -1,0 +1,157 @@
+---
+title: 'DATA 624 Spring 2019: Project-2'
+author: "Ahmed Sajjad, Harpreet Shoker, Jagruti Solao, Chad Smith, Todd Weigel"
+date: "April 29, 2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(naniar)
+library(corrplot)
+library(caret)
+library(corrr)
+library(mice)
+library(randomForest)
+library(dplyr)
+```
+
+Loading the data set 
+```{r}
+project_df <-read.csv("StudentData.csv",sep=",",header=TRUE,stringsAsFactors=FALSE)
+dim(project_df)
+```
+
+From the above result dataset has 33 variables and 2571 observations.so we have 32 predictor variables and 1 target variable.
+Lets look at summary of data
+
+```{r}
+summary(project_df)
+#str(project_df)
+```
+
+From the summary results - The variable Brandcode is a character type .All the other variables are numeric and integers.
+We can see null values in all variables except Air.Pressure and Pressure.Vacuum.We can have a look through plot
+
+```{r}
+project_df[, c(16, 18, 21, 28)] <- sapply(project_df[, c(16, 18, 21, 28)], as.numeric) # converting int to numeric
+```
+
+Lets look at the missing values in the dataset
+```{r}
+gg_miss_var(project_df)
+```
+The above plot shows that MFR has most missing values.
+
+To have a better look to see distribution of the variables lets plot histogram of all variables
+
+```{r}
+par(mfrow = c(3,5), cex = .5)
+project_df1 <- project_df[2:ncol(project_df)]
+for(i in colnames(project_df1)){
+hist(project_df1[,i], xlab = names(project_df1[i]),
+  main = names(project_df1[i]), col="light blue", ylab="")
+}
+```
+From the above some of the variables shows nearly normal distributions.Some of variables shows strong skewness that means the presence of outliers.
+Also some variables have many near to zero values  Hyd.Pressure1, Hyd.Pressure2, and Hyd.Pressure3
+Some varibles need transformations here.
+(need to update all these)
+Plotting boxplots of all variables will give better understanding with outliers.
+```{r}
+par(mfrow = c(3,5), cex = .5)
+for(i in colnames(project_df1)){
+boxplot(project_df1[,i], xlab = names(project_df1[i]),
+  main = names(project_df1[i]), col="light blue", ylab="")
+}
+```
+
+(update here with method to fix outliers)
+
+CORRELATIONS BETWEEN VARIABLES :-
+
+```{r}
+
+plotcorr =cor(project_df1,use="pairwise.complete.obs", method = "pearson")
+
+corrplot(plotcorr, method = "color",type = "upper", order = "original", number.cex = .7,tl.pos = "td",tl.cex = 0.5, tl.srt = 90,diag = TRUE)
+
+```
+```{r}
+
+cor_var = findCorrelation(plotcorr, cutoff=0.75)
+print(cor_var)
+```
+
+We have found out the variables that are very highly correlated with each other.
+
+Carb.Volume with Density, Balling, Alch.Rel, Carb.Rel, and Balling.Lvl 
+
+Carb.Pressure with Carb.Temp
+
+Filler.Level with Bowl.Setpoint
+
+Filler.Speed with MFR
+
+Let us now look at the correlation between the target (pH) variable and the predictors.
+
+```{r}
+library(ggplot2)
+x <- project_df1 %>% correlate() %>% focus(PH)
+x %>% 
+ mutate(rowname = factor(rowname, levels = rowname[order(PH)])) %>%  # Order by correlation strength
+  ggplot(aes(x = rowname, y = PH)) +
+    geom_bar(stat = "identity") +
+    ylab("Correlation with PH") +
+    xlab("Variables") + geom_col() + 
+    coord_flip()
+
+```
+
+
+DATA PREprocessing 
+
+Imputations - 
+Variable Brand.code has a proportion of its data that is unspecified.
+```{r}
+library(plyr)
+count(project_df$Brand.Code != "")
+```
+There are around 120 values that are unspecified we will replace blank codes with "N"
+
+```{r}
+project_df$Brand.Code[project_df$Brand.Code==""]<- "N"
+count(project_df$Brand.Code != "")
+```
+
+For all other missing values we will be using MICE package and a Random Forest Regression.
+```{r results='hide'}
+
+project_df_new <- mice(data = project_df, m = 2, method = 'rf', maxit = 3)
+```
+Let’s compare the distributions of original and imputed data using   plots.The density of the imputed data for each imputed dataset is showed in purple while the density of the observed data is showed in blue
+
+```{r}
+densityplot(project_df_new)
+project_df_new1 <- complete(project_df_new)
+```
+
+NON Zero VARIANCE VARIABLES
+
+```{r}
+NZV = nearZeroVar(project_df_new1, saveMetrics = TRUE)
+NZV[NZV[,"zeroVar"] > 0, ] 
+NZV[NZV[,"zeroVar"] + NZV[,"nzv"] > 0, ]
+```
+We found that only Hyd Pressure 1 is the result.
+Also we already found from hist plots we observed the high number of 0 values for variables; Hyd.Pressure1, Hyd.Pressure2, and Hyd.Pressure3. We can remove these 3 variables from dataset.
+
+```{r}
+project_df_new1 <- project_df_new1[, -c(13:15)]
+```
+
+
