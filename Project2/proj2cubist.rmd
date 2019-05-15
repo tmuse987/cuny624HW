@@ -40,8 +40,6 @@ setwd("C:\\school\\cuny\\624\\cuny624HW\\Project2")
 # write.csv(project_df, file = "StudentDataClean.csv", row.names = FALSE)
 
 project_df <-read.csv("StudentDataClean.csv",sep=",",header=TRUE,stringsAsFactors=FALSE)
-##remove sequence number written out previously
-project_df <- project_df[,-1] 
 
 ```
 
