@@ -182,14 +182,6 @@ lm_pred = predict(linearModel_data, newdata = project_df_new1_test)
 linearModel_data
 ```
 
-### General Linear Model
-```{r eval = TRUE}
-set.seed(143)
-generalLinearModel_data = train(PH ~ ., data = project_df_new1_train , metric = 'RMSE', method = 'glm', preProcess = c('center', 'scale'), trControl = myControl)
-glm_pred = predict(generalLinearModel_data, newdata = project_df_new1_test)
-generalLinearModel_data
-```
-
 ### Support Vector Machines (SVM) Model
 ```{r eval = TRUE}
 set.seed(143)
@@ -217,7 +209,6 @@ showModelDetails <- function(model){
   head(rslts, 10) %>% kable () %>% kable_styling(bootstrap_options = "striped", full_width = F)
 }
 showModelDetails(linearModel_data)
-showModelDetails(generalLinearModel_data)
 showModelDetails(svmRadial_data)
 showModelDetails(randomForest_data)
 ```
