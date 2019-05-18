@@ -24,6 +24,7 @@ library(e1071)
 library(kernlab)
 library(ranger)
 library(kableExtra)
+library(ModelMetrics)
 ```
 
 Loading the data set 
@@ -200,6 +201,127 @@ randomForest_data
 
 ### Cubist Model
 
+####Reread all data to start fresh.
+```{r}
+project_df <-read.csv("StudentData.csv",sep=",",header=TRUE,stringsAsFactors=FALSE)
+
+#cleanup
+project_df$Brand.Code[project_df$Brand.Code==""]<- "N"
+
+#compute imputed values for missing values
+project_df_new <- mice(data = project_df, m = 2, method = 'rf', maxit = 3)
+#and  recreate the dataframe
+project_df <- complete(project_df_new)
+```
+
+###Create variables to hold data in future steps.
+```{r}
+
+PHTest <- NULL
+dfTest <- NULL
+PHTrain <- NULL
+dfTrain <- NULL
+PH <- project_df$PH
+project_df <<- project_df[, !(names(project_df) %in% c("PH"))]
+```
+
+####Add "dummy"" variables for the categorical column brand.
+
+```{r}
+
+#create dummy variables for the categorical brand.code
+dummys <- dummyVars(~Brand.Code, data=project_df)
+dfDummys <- data.frame(predict(dummys, project_df))
+project_df <- bind_cols(project_df, dfDummys)
+project_df <- project_df[,-1]
+
+```
+
+Set a seed for repeatability.  Then create a function to partition data in to test and train sets.  80% goes to train, 20% to test.
+
+```{r}
+seed <- 42
+set.seed(seed)
+partition <- function(df)
+{
+    #divide into test and train
+ 
+    partitions <- createDataPartition(seq(1, nrow(df)), p = 0.8, list = FALSE)
+    dfTrain <<- df[partitions,]
+    dfTest <<- df[-partitions,]
+    
+    PHTrain <<- PH[partitions]
+    PHTest <<- PH[-partitions]
+}
+
+```
+###Preprocess the data.  
+We will globably center, scale and perform  boxcox transform the data.  Note each of these was tested individually, and performance improved with each of these actions.  PCA was tried, but even removing any of the low performing predictors had a negative impact of RMSE.  If we want to improve performance we could do PCA at 95% and remove about a third of the variables.
+
+We then call the partition function, to create the dftrain, dftest and the PHTrain and PHTest datasets.
+
+From results of the preprocessing, we see all values were scaled and centered, and 22 had a boxcox transformation applied.
+```{r}
+##doing PCA at 95% level increases RMSE noticably (10% or so), so we won't do it.
+df <- project_df
+pp <- preProcess(df, method = c("BoxCox", "center", "scale"))
+pp
+df <- predict(pp, df)
+df <- partition(df)
+
+```
+###CV object
+
+Set up a control object that will do cross validation, so that we improve results, by reducing chance of poor randomness in any inital paritioning.
+
+```{r}
+
+#use cross validation
+#the more folds, the better the results, but the longer the processing takes.
+controlObject <- trainControl(method = "repeatedcv", repeats = 5, number = 10)
+
+```
+
+###Cubist Grid.  
+The best performance from a number of different models were compared.  Cubist grid was the best of those testsed.  Neural Networks were a close second, but took forever (hours) to get close.  SVM was also close in performance.
+
+First set up the grid of test data.  
+"Committees" are the sets of models tested and chained together.  Prior models affect future models, as each data point's weight in the current model is adjusted based on it performance in the prior model.
+Neighbors is a KNN algorithm that can further adjust the model based on each datapoints neighbors.
+
+The print of the cubistgrid shows all the variations that will be tested.
+
+Note, while developing, no test with small committees was chosen as the best model, so we are only searching with committee size of 50 or above.
+
+```{r}
+cubistGrid <- expand.grid(.committees = seq(50,100,10),
+                          .neighbors = seq(1,9,2))
+cubistGrid
+```
+###Execute the Cubist Model.  
+Note commented out because it takes forever.  We will load a saved version in next cell, that has the computed model already created.
+```{r}
+# cubistModel <- train(dfTrain, PHTrain,
+#                      method = "cubist",
+#                      tuneGrid = cubistGrid,
+#                      trControl = controlObject)
+# saveRDS(cubistModel, file = "cubistModel.rds")
+```
+
+
+
+###Load the saved cubist model.  And show results
+
+We see that we get over 80% correlation on the test PH predicted value to the actual test value.  And RMSE is about .10
+```{R}
+cubistModel <- readRDS("cubistModel.rds")
+print(cubistModel)
+cubistPred <- predict(cubistModel, dfTest)
+xyplot(PHTest ~ cubistPred)
+print(cor(PHTest, cubistPred))
+print(rmse(PHTest, cubistPred))
+
+```
 ## Compare Models
 ```{r}
 #Function to display model details like RMSE etc
@@ -211,11 +333,73 @@ showModelDetails <- function(model){
 showModelDetails(linearModel_data)
 showModelDetails(svmRadial_data)
 showModelDetails(randomForest_data)
+showModelDetails(cubistModel)
 ```
 
 <table>
 </table>
 
+
+##Load "Student Evaluation to Predict" dataset.  
+
+```{r}
+
+dfToPredict <-read.csv("StudentEvaluation- TO PREDICT.csv",sep=",",header=TRUE,stringsAsFactors=FALSE)
+df <- dfToPredict
+```
+
+#Clean up dataset 
+Just as we did with the training test file.
+
+```{r}
+
+###commented out, we will just load "cleaned up file"
+#cleanup
+
+#Remove PH Column
+df <- df[, !(names(df) %in% c("PH"))]
+
+df$Brand.Code[df$Brand.Code==""]<- "N"
+
+#compute imputed values for missing values
+df <- mice(data = df, m = 2, method = 'rf', maxit = 3)
+#and  recreate the dataframe
+df <- complete(df)
+#write.csv(df, file = "StudentEvaluation- TO PREDICT_Clean.csv", row.names = FALSE)
+# # 
+#df <-read.csv("StudentEvaluation- TO PREDICT_Clean.csv",sep=",",header=TRUE,stringsAsFactors=FALSE)
+
+
+
+```
+###Again Create Dummy VARS
+
+```{r}
+#create dummy variables for the categorical brand.code
+
+dummys <- dummyVars(~Brand.Code, data=df)
+dfDummys <- data.frame(predict(dummys, df))
+df <- bind_cols(df, dfDummys)
+df <- df[,-1]
+
+```
+###Again Preprocess the data
+(But we don't need to partition)
+
+```{r}
+df <- df
+pp <- preProcess(df, method = c("BoxCox", "center", "scale"))
+pp
+df <- predict(pp, df)
+
+```
+Do our prediction, put them in the predicted dataset and save to a file
+```{r}
+cubistPred <- predict(cubistModel, df)
+#cubistPred
+dfToPredict$PH <- cubistPred
+write.csv(dfToPredict, "StudentDateWithPredictedPH.csv", row.names = FALSE)
+```
 
 ## Conclusion
 
